@@ -56,7 +56,7 @@ export type GameStatus =
 
 export type GameMode = '1v1' | '1v2' | '1v3' | '1v4';
 export type BotDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
-export type VisualTheme = 'forest' | 'mahogany' | 'indigo' | 'sunset';
+export type VisualTheme = 'forest' | 'midnight' | 'purple' | 'cream' | 'sunset' | 'ocean';
 
 export interface GameState {
   status: GameStatus;

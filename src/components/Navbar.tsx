@@ -39,7 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isInGame = false,
 }) => {
   return (
-    <header className="w-full bg-[#08291F]/95 border-b border-[#176B45]/60 px-3 sm:px-6 py-2.5 backdrop-blur-md sticky top-0 z-40 select-none">
+    <header className="w-full bg-[var(--theme-bg-main)]/95 border-b border-[var(--theme-border)]/60 px-3 sm:px-6 py-2.5 backdrop-blur-md sticky top-0 z-40 select-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-6">
         
         {/* Zone 1: Brand Title & Lobby Return */}
@@ -47,10 +47,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           {isInGame && onOpenLobby && (
             <button
               onClick={onOpenLobby}
-              className="p-1.5 rounded-lg bg-[#123D2B] border border-[#176B45] text-[#F7F3E8] hover:border-[#D7B45A] transition-colors cursor-pointer mr-1"
+              className="p-1.5 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] text-[var(--theme-text-primary)] hover:border-[var(--theme-accent)] transition-colors cursor-pointer mr-1"
               title="Return to Main Menu Lobby"
             >
-              <Home className="w-4 h-4 text-[#D7B45A]" />
+              <Home className="w-4 h-4 text-[var(--theme-accent)]" />
             </button>
           )}
 
@@ -58,39 +58,39 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onOpenLobby}
             className="flex items-center gap-2 cursor-pointer group"
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#123D2B] border border-[#D7B45A] flex items-center justify-center text-[#D7B45A] font-serif font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-accent)] flex items-center justify-center text-[var(--theme-accent)] font-serif font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
               W
             </div>
-            <span className="font-display font-black text-base sm:text-xl tracking-tight text-[#F7F3E8] whitespace-nowrap">
-              WHOT <span className="text-[#D7B45A]">It!</span>
+            <span className="font-display font-black text-base sm:text-xl tracking-tight text-[var(--theme-text-primary)] whitespace-nowrap">
+              WHOT <span className="text-[var(--theme-accent)]">It!</span>
             </span>
           </div>
         </div>
 
         {/* Zone 2: Navigation Links */}
-        <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-xs sm:text-sm font-medium text-[#F7F3E8]/80 overflow-x-auto no-scrollbar py-1">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-xs sm:text-sm font-medium text-[var(--theme-text-muted)] overflow-x-auto no-scrollbar py-1">
           <button
             onClick={onOpenHowToPlay}
-            className="hover:text-[#D7B45A] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             How to Play
           </button>
           <button
             onClick={onOpenStats}
-            className="hover:text-[#D7B45A] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             Statistics
           </button>
           <button
             onClick={onOpenDailyReward}
-            className="hover:text-[#D7B45A] transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 cursor-pointer"
+            className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 cursor-pointer"
           >
             <span>Daily Gift</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7CCB75]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent)]" />
           </button>
           <button
             onClick={onOpenGemShop}
-            className="hover:text-[#D7B45A] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             Gem Shop
           </button>
@@ -103,8 +103,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onToggleMusic}
             className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
               musicEnabled
-                ? 'bg-[#176B45] text-[#7CCB75] border-[#7CCB75]/50'
-                : 'text-[#F7F3E8]/50 border-transparent hover:bg-[#123D2B]'
+                ? 'bg-[var(--theme-bg-elevated)] text-[var(--theme-accent)] border-[var(--theme-accent)]/50'
+                : 'text-[var(--theme-text-muted)] border-transparent hover:bg-[var(--theme-bg-surface)]'
             }`}
             title={musicEnabled ? 'Turn music off' : 'Turn music on'}
             aria-label="Toggle Music"
@@ -115,7 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Sound Mute Toggle */}
           <button
             onClick={onToggleSound}
-            className="p-1.5 text-[#F7F3E8]/70 hover:text-[#F7F3E8] hover:bg-[#123D2B] rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-surface)] rounded-lg transition-colors cursor-pointer"
             title={soundEnabled ? 'Mute sound' : 'Unmute sound'}
             aria-label={soundEnabled ? 'Mute sound' : 'Unmute sound'}
           >
@@ -125,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Settings Button */}
           <button
             onClick={onOpenSettings}
-            className="p-1.5 text-[#F7F3E8]/70 hover:text-[#D7B45A] hover:bg-[#123D2B] rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-[var(--theme-text-muted)] hover:text-[var(--theme-accent)] hover:bg-[var(--theme-bg-surface)] rounded-lg transition-colors cursor-pointer"
             title="Settings"
           >
             <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -138,12 +138,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               disabled={!canPeek}
               className={`flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95 cursor-pointer ${
                 isDailyFreePeek
-                  ? 'bg-[#176B45] text-[#F7F3E8] border-[#7CCB75]/50 hover:bg-[#123D2B]'
-                  : 'bg-[#08291F] text-[#D7B45A] border-[#D7B45A]/50 hover:bg-[#123D2B]'
+                  ? 'bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border-[var(--theme-accent)]/50 hover:bg-[var(--theme-bg-surface)]'
+                  : 'bg-[var(--theme-bg-main)] text-[var(--theme-accent)] border-[var(--theme-accent)]/50 hover:bg-[var(--theme-bg-surface)]'
               } disabled:opacity-40 disabled:cursor-not-allowed`}
               title="Peek what the next opponent plans to play"
             >
-              <Sparkles className="w-3 h-3 text-[#D7B45A]" />
+              <Sparkles className="w-3 h-3 text-[var(--theme-accent)]" />
               <span className="hidden sm:inline">Peek</span>
               <span className="text-[10px] px-1 py-0.2 rounded bg-black/30 font-mono">
                 {isDailyFreePeek ? 'FREE' : '100💎'}
@@ -154,18 +154,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Gem Balance Counter */}
           <button
             onClick={onOpenGemShop}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-[#123D2B] border border-[#D7B45A]/40 hover:border-[#D7B45A] text-[#F7F3E8] text-xs font-bold transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border-subtle)] hover:border-[var(--theme-accent)] text-[var(--theme-text-primary)] text-xs font-bold transition-all shadow-sm cursor-pointer"
             title="Gem balance (Click to open Gem Shop)"
           >
             <span>💎</span>
-            <span className="font-mono text-[#D7B45A] text-xs">{gems}</span>
+            <span className="font-mono text-[var(--theme-accent)] text-xs">{gems}</span>
           </button>
 
           {/* New Match Button */}
           {isInGame && (
             <button
               onClick={onNewMatch}
-              className="hidden lg:inline-flex px-3 py-1.5 text-xs font-bold text-[#08291F] bg-[#D7B45A] hover:bg-[#c2a24c] rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap shrink-0"
+              className="hidden lg:inline-flex px-3 py-1.5 text-xs font-bold text-[var(--theme-accent-text)] bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap shrink-0"
             >
               Restart
             </button>

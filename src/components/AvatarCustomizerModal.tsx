@@ -108,29 +108,29 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-lg bg-[#123D2B] border border-[#D7B45A] rounded-2xl shadow-2xl p-5 text-[#F7F3E8] max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-5 text-[var(--theme-text-primary)] max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#176B45] pb-3 mb-4">
+        <div className="flex items-center justify-between border-b border-[var(--theme-border)] pb-3 mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎭</span>
-            <h2 className="font-display font-extrabold text-xl text-[#F7F3E8]">
+            <h2 className="font-display font-extrabold text-xl text-[var(--theme-text-primary)]">
               Avatar Studio
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-xs text-[#F7F3E8]/60 hover:text-[#F7F3E8] p-1.5"
+            className="text-xs text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] p-1.5 cursor-pointer"
           >
             ✕ Close
           </button>
         </div>
 
         {/* Live Preview & Name Edit */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#08291F] border border-[#176B45] rounded-xl p-4 mb-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 bg-[var(--theme-bg-main)] border border-[var(--theme-border)] rounded-xl p-4 mb-4">
           <AvatarView avatar={avatar} name={name} size="lg" />
           <div className="flex-1 w-full text-center sm:text-left">
-            <label className="text-[11px] font-semibold text-[#D7B45A] uppercase tracking-wider block mb-1">
+            <label className="text-[11px] font-semibold text-[var(--theme-accent)] uppercase tracking-wider block mb-1">
               Display Name
             </label>
             <input
@@ -139,24 +139,24 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
               maxLength={15}
               onChange={e => setName(e.target.value)}
               placeholder="Enter your name..."
-              className="w-full bg-[#123D2B] border border-[#176B45] focus:border-[#D7B45A] text-[#F7F3E8] font-display font-bold text-base px-3 py-1.5 rounded-lg outline-none"
+              className="w-full bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] focus:border-[var(--theme-accent)] text-[var(--theme-text-primary)] font-display font-bold text-base px-3 py-1.5 rounded-lg outline-none"
             />
-            <span className="text-[10px] text-[#F7F3E8]/50 mt-1 block">
+            <span className="text-[10px] text-[var(--theme-text-muted)] mt-1 block">
               Shown to opponents at the table
             </span>
           </div>
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#08291F] rounded-lg mb-4 text-xs font-semibold overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 p-1 bg-[var(--theme-bg-main)] rounded-lg mb-4 text-xs font-semibold overflow-x-auto no-scrollbar">
           {(['skin', 'hair', 'attire', 'presets'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-1.5 px-3 rounded-md capitalize transition-colors whitespace-nowrap ${
+              className={`flex-1 py-1.5 px-3 rounded-md capitalize transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === tab
-                  ? 'bg-[#176B45] text-[#F7F3E8] shadow-sm'
-                  : 'text-[#F7F3E8]/70 hover:text-[#F7F3E8]'
+                  ? 'bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] shadow-sm'
+                  : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
               }`}
             >
               {tab === 'presets' ? 'Quick Presets' : tab}
@@ -168,7 +168,7 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
         <div className="min-h-[140px] mb-5">
           {activeTab === 'skin' && (
             <div>
-              <span className="text-xs text-[#F7F3E8]/70 mb-2 block font-medium">
+              <span className="text-xs text-[var(--theme-text-muted)] mb-2 block font-medium">
                 Select Skin Tone:
               </span>
               <div className="grid grid-cols-5 gap-2">
@@ -176,17 +176,17 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
                   <button
                     key={item.color}
                     onClick={() => setAvatar(prev => ({ ...prev, skinTone: item.color }))}
-                    className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all ${
+                    className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all cursor-pointer ${
                       avatar.skinTone === item.color
-                        ? 'border-[#D7B45A] bg-[#176B45]/40 shadow-md ring-2 ring-[#D7B45A]'
-                        : 'border-[#176B45] bg-[#08291F] hover:border-[#D7B45A]/60'
+                        ? 'border-[var(--theme-accent)] bg-[var(--theme-bg-elevated)]/40 shadow-md ring-2 ring-[var(--theme-accent)]'
+                        : 'border-[var(--theme-border)] bg-[var(--theme-bg-main)] hover:border-[var(--theme-accent)]/60'
                     }`}
                   >
                     <div
                       className="w-7 h-7 rounded-full shadow-inner border border-white/20"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="text-[10px] text-[#F7F3E8]/80 font-medium truncate w-full text-center">
+                    <span className="text-[10px] text-[var(--theme-text-primary)]/80 font-medium truncate w-full text-center">
                       {item.label}
                     </span>
                   </button>
@@ -197,7 +197,7 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
 
           {activeTab === 'hair' && (
             <div>
-              <span className="text-xs text-[#F7F3E8]/70 mb-2 block font-medium">
+              <span className="text-xs text-[var(--theme-text-muted)] mb-2 block font-medium">
                 Select Hairstyle & Headgear:
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -205,10 +205,10 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
                   <button
                     key={item.id}
                     onClick={() => setAvatar(prev => ({ ...prev, hairStyle: item.id }))}
-                    className={`p-2.5 rounded-xl border text-xs font-semibold transition-all text-left ${
+                    className={`p-2.5 rounded-xl border text-xs font-semibold transition-all text-left cursor-pointer ${
                       avatar.hairStyle === item.id
-                        ? 'border-[#D7B45A] bg-[#176B45]/60 text-[#D7B45A] ring-1 ring-[#D7B45A]'
-                        : 'border-[#176B45] bg-[#08291F] text-[#F7F3E8]/80 hover:border-[#D7B45A]/50'
+                        ? 'border-[var(--theme-accent)] bg-[var(--theme-bg-elevated)]/60 text-[var(--theme-accent)] ring-1 ring-[var(--theme-accent)]'
+                        : 'border-[var(--theme-border)] bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)]/80 hover:border-[var(--theme-accent)]/50'
                     }`}
                   >
                     {item.label}
@@ -220,7 +220,7 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
 
           {activeTab === 'attire' && (
             <div>
-              <span className="text-xs text-[#F7F3E8]/70 mb-2 block font-medium">
+              <span className="text-xs text-[var(--theme-text-muted)] mb-2 block font-medium">
                 Select Attire & Ankara Pattern:
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -228,10 +228,10 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
                   <button
                     key={item.id}
                     onClick={() => setAvatar(prev => ({ ...prev, clothPattern: item.id }))}
-                    className={`p-2.5 rounded-xl border text-xs font-semibold transition-all text-left ${
+                    className={`p-2.5 rounded-xl border text-xs font-semibold transition-all text-left cursor-pointer ${
                       avatar.clothPattern === item.id
-                        ? 'border-[#D7B45A] bg-[#176B45]/60 text-[#D7B45A] ring-1 ring-[#D7B45A]'
-                        : 'border-[#176B45] bg-[#08291F] text-[#F7F3E8]/80 hover:border-[#D7B45A]/50'
+                        ? 'border-[var(--theme-accent)] bg-[var(--theme-bg-elevated)]/60 text-[var(--theme-accent)] ring-1 ring-[var(--theme-accent)]'
+                        : 'border-[var(--theme-border)] bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)]/80 hover:border-[var(--theme-accent)]/50'
                     }`}
                   >
                     {item.label}
@@ -243,7 +243,7 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
 
           {activeTab === 'presets' && (
             <div>
-              <span className="text-xs text-[#F7F3E8]/70 mb-2 block font-medium">
+              <span className="text-xs text-[var(--theme-text-muted)] mb-2 block font-medium">
                 Pick a Curated Character:
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -254,14 +254,14 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
                       setAvatar(preset.avatar);
                       setName(preset.name);
                     }}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-[#08291F] border border-[#176B45] hover:border-[#D7B45A] transition-all text-left"
+                    className="flex items-center gap-2 p-2 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-accent)] transition-all text-left cursor-pointer"
                   >
                     <AvatarView avatar={preset.avatar} name={preset.name} size="sm" />
                     <div>
-                      <span className="font-display font-bold text-xs text-[#F7F3E8] block">
+                      <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] block">
                         {preset.name}
                       </span>
-                      <span className="text-[10px] text-[#D7B45A]">Select</span>
+                      <span className="text-[10px] text-[var(--theme-accent)]">Select</span>
                     </div>
                   </button>
                 ))}
@@ -271,16 +271,16 @@ export const AvatarCustomizerModal: React.FC<AvatarCustomizerModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center gap-3 pt-3 border-t border-[#176B45]">
+        <div className="flex items-center gap-3 pt-3 border-t border-[var(--theme-border)]">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-[#08291F] border border-[#176B45] text-xs font-semibold text-[#F7F3E8]/80 hover:bg-[#176B45] transition-all"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-xs font-semibold text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-elevated)] transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-[#D7B45A] hover:bg-[#c2a24c] text-[#08291F] font-display font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
           >
             Save Avatar & Name
           </button>

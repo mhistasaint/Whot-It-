@@ -71,21 +71,21 @@ export const CardView: React.FC<CardViewProps> = ({
     xl: 'w-32 h-44 md:w-36 md:h-52 text-lg rounded-xl shadow-xl',
   }[size];
 
-  // If face down, render authentic textured Nigerian Whot card back
+  // If face down, render authentic textured Nigerian Whot card back themed to active palette
   if (faceDown || !card) {
     return (
       <div
         onClick={onClick}
         style={style}
-        className={`relative ${sizeClasses} ${className} bg-[#123D2B] border border-[#D7B45A]/40 overflow-hidden flex items-center justify-center cursor-pointer transition-transform duration-200 select-none`}
+        className={`relative ${sizeClasses} ${className} bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)]/40 overflow-hidden flex items-center justify-center cursor-pointer transition-transform duration-200 select-none`}
       >
-        {/* Subtle geometric Ankara patterned back */}
-        <div className="absolute inset-1 border border-[#D7B45A]/20 rounded flex items-center justify-center p-1 bg-[#08291F]">
-          <div className="w-full h-full border border-dashed border-[#D7B45A]/30 rounded flex flex-col items-center justify-center">
-            <div className="w-7 h-7 rounded-full border border-[#D7B45A]/60 flex items-center justify-center bg-[#176B45]/40 mb-0.5">
-              <span className="font-display font-extrabold text-[#D7B45A] text-[10px] tracking-widest">W</span>
+        {/* Geometric Ankara patterned back */}
+        <div className="absolute inset-1 border border-[var(--theme-gold)]/20 rounded flex items-center justify-center p-1 bg-[var(--theme-bg-main)]">
+          <div className="w-full h-full border border-dashed border-[var(--theme-gold)]/30 rounded flex flex-col items-center justify-center">
+            <div className="w-7 h-7 rounded-full border border-[var(--theme-gold)]/60 flex items-center justify-center bg-[var(--theme-bg-elevated)]/40 mb-0.5">
+              <span className="font-display font-extrabold text-[var(--theme-gold)] text-[10px] tracking-widest">W</span>
             </div>
-            <span className="font-display font-bold text-[9px] uppercase tracking-widest text-[#D7B45A]">WHOT</span>
+            <span className="font-display font-bold text-[9px] uppercase tracking-widest text-[var(--theme-gold)]">WHOT</span>
           </div>
         </div>
       </div>

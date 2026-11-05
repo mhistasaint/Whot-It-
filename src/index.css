@@ -2,21 +2,140 @@
 
 @layer base {
   :root {
-    --color-forest: #123D2B;
-    --color-deep: #08291F;
-    --color-mid: #176B45;
-    --color-fresh: #7CCB75;
-    --color-cream: #F7F3E8;
-    --color-gold: #D7B45A;
     --color-whot-red: #B91C1C;
     --font-display: 'Outfit', sans-serif;
     --font-body: 'Plus Jakarta Sans', sans-serif;
+
+    /* Default Theme: Forest Green */
+    --theme-bg-main: #08291F;
+    --theme-bg-surface: #123D2B;
+    --theme-bg-elevated: #176B45;
+    --theme-border: #218858;
+    --theme-border-subtle: rgba(215, 180, 90, 0.25);
+    --theme-accent: #D7B45A;
+    --theme-accent-hover: #C5A047;
+    --theme-accent-text: #08291F;
+    --theme-gold: #D7B45A;
+    --theme-text-primary: #F7F3E8;
+    --theme-text-muted: rgba(247, 243, 232, 0.7);
+    --theme-felt-gradient: radial-gradient(circle at 50% 45%, #18523b 0%, #123D2B 55%, #08291F 100%);
+    --theme-table-border: #123D2B;
+    --theme-glow: rgba(124, 203, 117, 0.5);
+  }
+
+  /* 1. Forest Green */
+  .theme-forest {
+    --theme-bg-main: #08291F;
+    --theme-bg-surface: #123D2B;
+    --theme-bg-elevated: #176B45;
+    --theme-border: #218858;
+    --theme-border-subtle: rgba(215, 180, 90, 0.25);
+    --theme-accent: #D7B45A;
+    --theme-accent-hover: #C5A047;
+    --theme-accent-text: #08291F;
+    --theme-gold: #D7B45A;
+    --theme-text-primary: #F7F3E8;
+    --theme-text-muted: rgba(247, 243, 232, 0.7);
+    --theme-felt-gradient: radial-gradient(circle at 50% 45%, #18523b 0%, #123D2B 55%, #08291F 100%);
+    --theme-table-border: #123D2B;
+    --theme-glow: rgba(124, 203, 117, 0.5);
+  }
+
+  /* 2. Midnight */
+  .theme-midnight {
+    --theme-bg-main: #060911;
+    --theme-bg-surface: #0F172A;
+    --theme-bg-elevated: #1E293B;
+    --theme-border: #334155;
+    --theme-border-subtle: rgba(56, 189, 248, 0.25);
+    --theme-accent: #38BDF8;
+    --theme-accent-hover: #0EA5E9;
+    --theme-accent-text: #060911;
+    --theme-gold: #FCD34D;
+    --theme-text-primary: #F8FAFC;
+    --theme-text-muted: rgba(248, 250, 252, 0.7);
+    --theme-felt-gradient: radial-gradient(circle at 50% 45%, #1e293b 0%, #0f172a 55%, #060911 100%);
+    --theme-table-border: #1E293B;
+    --theme-glow: rgba(56, 189, 248, 0.5);
+  }
+
+  /* 3. Royal Purple */
+  .theme-purple {
+    --theme-bg-main: #12081E;
+    --theme-bg-surface: #24113B;
+    --theme-bg-elevated: #3A1B5E;
+    --theme-border: #582A8C;
+    --theme-border-subtle: rgba(245, 158, 11, 0.25);
+    --theme-accent: #F59E0B;
+    --theme-accent-hover: #D97706;
+    --theme-accent-text: #12081E;
+    --theme-gold: #FCD34D;
+    --theme-text-primary: #FAF5FF;
+    --theme-text-muted: rgba(250, 245, 255, 0.7);
+    --theme-felt-gradient: radial-gradient(circle at 50% 45%, #431f6e 0%, #24113B 55%, #12081E 100%);
+    --theme-table-border: #2D144A;
+    --theme-glow: rgba(192, 132, 252, 0.5);
+  }
+
+  /* 4. Classic Cream */
+  .theme-cream {
+    --theme-bg-main: #1C1713;
+    --theme-bg-surface: #2C231C;
+    --theme-bg-elevated: #42352B;
+    --theme-border: #635042;
+    --theme-border-subtle: rgba(229, 184, 105, 0.3);
+    --theme-accent: #E5B869;
+    --theme-accent-hover: #CCA050;
+    --theme-accent-text: #1C1713;
+    --theme-gold: #E5B869;
+    --theme-text-primary: #FDFBF7;
+    --theme-text-muted: rgba(253, 251, 247, 0.72);
+    --theme-felt-gradient: radial-gradient(circle at 50% 45%, #42352B 0%, #2C231C 55%, #1C1713 100%);
+    --theme-table-border: #382D24;
+    --theme-glow: rgba(229, 184, 105, 0.5);
+  }
+
+  /* 5. Sunset */
+  .theme-sunset {
+    --theme-bg-main: #1D0803;
+    --theme-bg-surface: #38130B;
+    --theme-bg-elevated: #541E12;
+    --theme-border: #7C2D12;
+    --theme-border-subtle: rgba(251, 191, 36, 0.25);
+    --theme-accent: #F59E0B;
+    --theme-accent-hover: #D97706;
+    --theme-accent-text: #1D0803;
+    --theme-gold: #FCD34D;
+    --theme-text-primary: #FFF7ED;
+    --theme-text-muted: rgba(255, 247, 237, 0.7);
+    --theme-felt-gradient: radial-gradient(circle at 50% 45%, #591d10 0%, #38130B 55%, #1D0803 100%);
+    --theme-table-border: #44160C;
+    --theme-glow: rgba(249, 115, 22, 0.5);
+  }
+
+  /* 6. Ocean */
+  .theme-ocean {
+    --theme-bg-main: #02121A;
+    --theme-bg-surface: #082838;
+    --theme-bg-elevated: #0E3E56;
+    --theme-border: #155E75;
+    --theme-border-subtle: rgba(6, 182, 212, 0.25);
+    --theme-accent: #06B6D4;
+    --theme-accent-hover: #0891B2;
+    --theme-accent-text: #02121A;
+    --theme-gold: #FCD34D;
+    --theme-text-primary: #ECFEFF;
+    --theme-text-muted: rgba(236, 254, 255, 0.7);
+    --theme-felt-gradient: radial-gradient(circle at 50% 45%, #0e3e56 0%, #082838 55%, #02121A 100%);
+    --theme-table-border: #0B3349;
+    --theme-glow: rgba(6, 182, 212, 0.5);
   }
 
   body {
     font-family: var(--font-body);
-    background-color: var(--color-deep);
-    color: var(--color-cream);
+    background-color: var(--theme-bg-main);
+    color: var(--theme-text-primary);
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   h1, h2, h3, h4, .font-display {
@@ -24,25 +143,10 @@
   }
 }
 
-/* Card table felt texture overlays by theme */
-.felt-table-forest {
-  background: radial-gradient(circle at 50% 45%, #18523b 0%, #123D2B 55%, #08291F 100%);
+/* Card table felt texture overlay */
+.felt-table {
+  background: var(--theme-felt-gradient);
   box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.75);
-}
-
-.felt-table-mahogany {
-  background: radial-gradient(circle at 50% 45%, #5e1f16 0%, #3E1812 55%, #1c0805 100%);
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
-}
-
-.felt-table-indigo {
-  background: radial-gradient(circle at 50% 45%, #1e293b 0%, #0f172a 55%, #020617 100%);
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85);
-}
-
-.felt-table-sunset {
-  background: radial-gradient(circle at 50% 45%, #78350f 0%, #431407 55%, #1f0702 100%);
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
 }
 
 /* Smooth horizontal scrollbar */

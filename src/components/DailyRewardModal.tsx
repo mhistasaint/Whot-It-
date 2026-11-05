@@ -28,24 +28,24 @@ export const DailyRewardModal: React.FC<DailyRewardModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-md bg-[#123D2B] border-2 border-[#D7B45A] rounded-2xl shadow-2xl p-5 sm:p-6 text-center text-[#F7F3E8]">
+      <div className="w-full max-w-md bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-5 sm:p-6 text-center text-[var(--theme-text-primary)]">
         {/* Gift Icon */}
-        <div className="w-14 h-14 mx-auto rounded-full bg-[#D7B45A]/20 border border-[#D7B45A] flex items-center justify-center mb-2 text-2xl">
+        <div className="w-14 h-14 mx-auto rounded-full bg-[var(--theme-accent)]/20 border border-[var(--theme-accent)] flex items-center justify-center mb-2 text-2xl">
           🎁
         </div>
 
-        <h2 className="font-display font-black text-xl text-[#F7F3E8] mb-0.5">
+        <h2 className="font-display font-black text-xl text-[var(--theme-text-primary)] mb-0.5">
           Daily Bonus & Streak
         </h2>
-        <p className="text-xs text-[#F7F3E8]/80 mb-4">
+        <p className="text-xs text-[var(--theme-text-muted)] mb-4">
           Claim free gems once every calendar day to grow your 7-day streak!
         </p>
 
         {/* 7-Day Streak Ladder */}
-        <div className="bg-[#08291F] border border-[#176B45] rounded-xl p-3 mb-4">
+        <div className="bg-[var(--theme-bg-main)] border border-[var(--theme-border)] rounded-xl p-3 mb-4">
           <div className="flex items-center justify-between text-xs mb-2 px-1">
-            <span className="text-[#F7F3E8]/70">Streak Calendar</span>
-            <span className="font-bold text-[#D7B45A]">
+            <span className="text-[var(--theme-text-muted)]">Streak Calendar</span>
+            <span className="font-bold text-[var(--theme-accent)]">
               🔥 {rewardState.consecutiveStreak} Day Streak
             </span>
           </div>
@@ -61,15 +61,15 @@ export const DailyRewardModal: React.FC<DailyRewardModalProps> = ({
                   key={dayNum}
                   className={`flex flex-col items-center py-2 px-1 rounded-lg border text-center transition-all ${
                     isCurrent
-                      ? 'border-[#D7B45A] bg-[#176B45] shadow-md ring-2 ring-[#D7B45A]'
+                      ? 'border-[var(--theme-accent)] bg-[var(--theme-bg-elevated)] shadow-md ring-2 ring-[var(--theme-accent)]'
                       : isPast
-                      ? 'border-[#7CCB75]/40 bg-[#176B45]/20 opacity-70'
-                      : 'border-[#176B45] bg-[#123D2B]/50'
+                      ? 'border-[var(--theme-border)] bg-[var(--theme-bg-surface)] opacity-70'
+                      : 'border-[var(--theme-border)]/50 bg-[var(--theme-bg-surface)]/50'
                   }`}
                 >
-                  <span className="text-[9px] text-[#F7F3E8]/70 uppercase">D{dayNum}</span>
+                  <span className="text-[9px] text-[var(--theme-text-muted)] uppercase">D{dayNum}</span>
                   <span className="text-base my-0.5">{dayNum === 7 ? '👑' : '💎'}</span>
-                  <span className={`text-[10px] font-bold ${isCurrent ? 'text-[#D7B45A]' : 'text-[#7CCB75]'}`}>
+                  <span className={`text-[10px] font-bold ${isCurrent ? 'text-[var(--theme-accent)]' : 'text-[var(--theme-text-primary)]'}`}>
                     +{amount}
                   </span>
                 </div>
@@ -79,7 +79,7 @@ export const DailyRewardModal: React.FC<DailyRewardModalProps> = ({
         </div>
 
         {claimMessage && (
-          <div className="mb-4 p-2.5 rounded-lg bg-[#176B45]/60 border border-[#7CCB75]/40 text-xs font-semibold text-[#7CCB75]">
+          <div className="mb-4 p-2.5 rounded-lg bg-[var(--theme-bg-elevated)]/60 border border-[var(--theme-border)] text-xs font-semibold text-[var(--theme-accent)]">
             {claimMessage}
           </div>
         )}
@@ -87,7 +87,7 @@ export const DailyRewardModal: React.FC<DailyRewardModalProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-[#08291F] border border-[#176B45] text-xs font-semibold text-[#F7F3E8]/80 hover:bg-[#176B45] transition-all"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-xs font-semibold text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-elevated)] transition-all cursor-pointer"
           >
             Close
           </button>
@@ -95,7 +95,7 @@ export const DailyRewardModal: React.FC<DailyRewardModalProps> = ({
           {rewardState.canClaimToday ? (
             <button
               onClick={handleClaim}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-[#D7B45A] hover:bg-[#c2a24c] text-[#08291F] font-display font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
             >
               Claim +{rewardState.todayRewardAmount} Gems
             </button>

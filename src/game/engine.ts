@@ -21,49 +21,81 @@ export const HUMAN_DEFAULT_AVATAR: PlayerAvatar = {
   gender: 'female',
 };
 
+export interface MarketRecycleResult {
+  drawPile: Card[];
+  discardPile: Card[];
+  recycledCount: number;
+}
+
 /**
- * Helper to ensure draw pile has cards by reshuffling discard pile if needed.
+ * Automatically recycles the discard pile into the market/draw pile.
+ * Rules:
+ * 1. Keep the current top card on the discard pile untouched.
+ * 2. Take every other card from the discard pile.
+ * 3. Shuffle those cards thoroughly.
+ * 4. Move the shuffled cards into the market pile.
+ * 5. Leave the original top discard card in place.
+ * 6. Edge case: If discard pile has <= 1 card, leave it in place, no loop.
  */
-function ensureDrawPileCards(drawPile: Card[], discardPile: Card[]): { drawPile: Card[]; discardPile: Card[] } {
+export function recycleMarketPile(drawPile: Card[], discardPile: Card[]): MarketRecycleResult {
   if (drawPile.length > 0) {
-    return { drawPile: [...drawPile], discardPile: [...discardPile] };
+    return { drawPile: [...drawPile], discardPile: [...discardPile], recycledCount: 0 };
   }
 
-  // Draw pile is empty: keep top discard, shuffle the rest to form new draw pile
+  // Edge case: only top discard exists or empty discard pile
   if (discardPile.length <= 1) {
-    return { drawPile: [], discardPile: [...discardPile] };
+    return { drawPile: [], discardPile: [...discardPile], recycledCount: 0 };
   }
 
+  // Keep the current top discard card in place
   const topDiscard = discardPile[discardPile.length - 1];
-  const cardsToShuffle = discardPile.slice(0, discardPile.length - 1);
-  const newDrawPile = shuffleDeck(cardsToShuffle);
+
+  // Take every other card from discard pile
+  const cardsToRecycle = discardPile.slice(0, discardPile.length - 1);
+
+  // Shuffle thoroughly
+  const newDrawPile = shuffleDeck(cardsToRecycle);
 
   return {
     drawPile: newDrawPile,
     discardPile: [topDiscard],
+    recycledCount: cardsToRecycle.length,
   };
 }
 
 /**
- * Draws N cards safely from the draw pile, reshuffling discard pile if necessary.
+ * Draws N cards safely from the draw pile, automatically recycling discard pile if market is exhausted.
  */
-function drawNCards(
+export function drawNCards(
   count: number,
   drawPile: Card[],
   discardPile: Card[]
-): { drawnCards: Card[]; newDrawPile: Card[]; newDiscardPile: Card[] } {
+): {
+  drawnCards: Card[];
+  newDrawPile: Card[];
+  newDiscardPile: Card[];
+  wasRecycled: boolean;
+  recycledCount: number;
+} {
   const drawnCards: Card[] = [];
   let currentDraw = [...drawPile];
   let currentDiscard = [...discardPile];
+  let wasRecycled = false;
+  let totalRecycled = 0;
 
   for (let i = 0; i < count; i++) {
     if (currentDraw.length === 0) {
-      const reshuffled = ensureDrawPileCards(currentDraw, currentDiscard);
-      currentDraw = reshuffled.drawPile;
-      currentDiscard = reshuffled.discardPile;
+      const recycleResult = recycleMarketPile(currentDraw, currentDiscard);
+      if (recycleResult.recycledCount > 0) {
+        currentDraw = recycleResult.drawPile;
+        currentDiscard = recycleResult.discardPile;
+        wasRecycled = true;
+        totalRecycled += recycleResult.recycledCount;
+      }
     }
 
     if (currentDraw.length === 0) {
+      // Genuinely exhausted: All 54 cards are in players' hands + 1 top discard
       break;
     }
 
@@ -75,6 +107,8 @@ function drawNCards(
     drawnCards,
     newDrawPile: currentDraw,
     newDiscardPile: currentDiscard,
+    wasRecycled,
+    recycledCount: totalRecycled,
   };
 }
 
@@ -83,10 +117,10 @@ function drawNCards(
  */
 export function getSuspensionNextIndex(currentIndex: number, isStar: boolean, totalPlayers: number): number {
   if (totalPlayers === 2) {
-    return currentIndex; // Skips the only opponent, turn returns to current player
+    return currentIndex; // In 1v1, suspension skips the opponent, turn returns to current player
   }
   if (totalPlayers === 3) {
-    if (isStar) return currentIndex; // Star 8 skips both opponents, turn returns to current player
+    if (isStar) return currentIndex; // Star 8 skips both opponents, returns to current player
     return (currentIndex + 2) % totalPlayers;
   }
   const skipCount = isStar ? 3 : 2;
@@ -359,6 +393,14 @@ export function playCard(
             const drawRes = drawNCards(1, drawPile, discardPile);
             drawPile = drawRes.newDrawPile;
             discardPile = drawRes.newDiscardPile;
+            if (drawRes.wasRecycled) {
+              logs.push({
+                id: `log_${Date.now()}_recycle_gm`,
+                timestamp: Date.now(),
+                text: `♻️ Market replenished during General Market! Shuffled ${drawRes.recycledCount} cards from discard pile into market.`,
+                type: 'special',
+              });
+            }
             if (drawRes.drawnCards.length > 0) {
               updatedPlayers[i] = {
                 ...updatedPlayers[i],
@@ -394,6 +436,23 @@ export function playCard(
         nextPlayerIndex = getNextPlayerIndex(state.currentPlayerIndex, 1, state.players.length);
         break;
       }
+    }
+  }
+
+  // AUTOMATIC MARKET REPLENISHMENT CHECK:
+  // If the draw pile is now empty after a play, and discard pile has cards to recycle (> 1),
+  // automatically recycle immediately so the market is ready for the next player!
+  if (drawPile.length === 0 && discardPile.length > 1) {
+    const autoRecycle = recycleMarketPile(drawPile, discardPile);
+    if (autoRecycle.recycledCount > 0) {
+      drawPile = autoRecycle.drawPile;
+      discardPile = autoRecycle.discardPile;
+      logs.push({
+        id: `log_${Date.now()}_auto_recycle`,
+        timestamp: Date.now(),
+        text: `♻️ Market was empty. Automatically recycled ${autoRecycle.recycledCount} cards from discard pile into the market.`,
+        type: 'special',
+      });
     }
   }
 
@@ -436,6 +495,7 @@ export function resolveWhotShape(state: GameState, chosenShape: CardShape): Game
 
 /**
  * Handles drawing card(s) on a player's turn.
+ * Automatically recycles market if depleted, while keeping top discard untouched.
  */
 export function drawCard(state: GameState, playerIndex: number): GameState {
   if (state.status === 'GAME_OVER') return state;
@@ -452,22 +512,41 @@ export function drawCard(state: GameState, playerIndex: number): GameState {
     logText = `⚠️ ${player.name} could not defend and drew ${drawAmount} penalty cards!`;
   }
 
-  const { drawnCards, newDrawPile, newDiscardPile } = drawNCards(
+  const { drawnCards, newDrawPile, newDiscardPile, wasRecycled, recycledCount } = drawNCards(
     drawAmount,
     state.drawPile,
     state.discardPile
   );
 
+  if (wasRecycled) {
+    logs.push({
+      id: `log_${Date.now()}_recycle`,
+      timestamp: Date.now(),
+      text: `♻️ Market replenished! Shuffled ${recycledCount} cards from discard pile into market (top card preserved).`,
+      type: 'special',
+    });
+  }
+
+  if (drawnCards.length === 0) {
+    // Edge case: entire deck is distributed in hands + 1 top discard
+    logs.push({
+      id: `log_${Date.now()}_empty`,
+      timestamp: Date.now(),
+      text: `⚠️ No cards remaining to draw anywhere! Turn passes to next player.`,
+      type: 'draw',
+    });
+  } else {
+    logs.push({
+      id: `log_${Date.now()}_draw`,
+      timestamp: Date.now(),
+      text: logText,
+      type: state.pendingPenalty ? 'penalty' : 'draw',
+    });
+  }
+
   const updatedPlayers = state.players.map((p, idx) =>
     idx === playerIndex ? { ...p, hand: [...p.hand, ...drawnCards] } : p
   );
-
-  logs.push({
-    id: `log_${Date.now()}_draw`,
-    timestamp: Date.now(),
-    text: logText,
-    type: state.pendingPenalty ? 'penalty' : 'draw',
-  });
 
   const nextPlayerIndex = getNextPlayerIndex(state.currentPlayerIndex, 1, state.players.length);
 

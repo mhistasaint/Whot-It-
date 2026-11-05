@@ -77,6 +77,11 @@ export default function App() {
     soundService.setMusicEnabled(settings.musicEnabled);
   }, [settings.soundEnabled, settings.musicEnabled]);
 
+  // Global Theme synchronization to body
+  useEffect(() => {
+    document.body.className = `theme-${settings.theme} antialiased`;
+  }, [settings.theme]);
+
   const handleUpdateSettings = (newSettings: Partial<PlayerSettings>) => {
     const updated = savePlayerSettings(newSettings);
     setSettings(updated);
@@ -303,19 +308,11 @@ export default function App() {
     turnBanner = `${currentPlayer.name} is making their move...`;
   }
 
-  // Theme felt CSS class
-  const themeFeltClass = {
-    forest: 'felt-table-forest',
-    mahogany: 'felt-table-mahogany',
-    indigo: 'felt-table-indigo',
-    sunset: 'felt-table-sunset',
-  }[settings.theme] || 'felt-table-forest';
-
   // Opponents list (all non-human players)
   const opponents = gameState.players.filter(p => !p.isHuman);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#08291F] text-[#F7F3E8] overflow-x-hidden">
+    <div className={`flex flex-col min-h-screen theme-${settings.theme} bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)] overflow-x-hidden`}>
       {/* Top Bar Navigation */}
       <Navbar
         gems={gems}
@@ -360,7 +357,7 @@ export default function App() {
       ) : (
         <main className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-2 sm:p-4 animate-fade-in">
           {/* Felt Card Table Canvas with Dynamic Theme */}
-          <div className={`${themeFeltClass} relative w-full rounded-3xl border-4 border-[#123D2B] shadow-2xl p-2 sm:p-5 flex flex-col justify-between min-h-[580px] md:min-h-[640px]`}>
+          <div className="felt-table relative w-full rounded-3xl border-4 border-[var(--theme-table-border)] shadow-2xl p-2 sm:p-5 flex flex-col justify-between min-h-[580px] md:min-h-[640px]">
             
             {/* Top Row Opponents: Layout dynamically adjusts based on active player count */}
             <div className="w-full">

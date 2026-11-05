@@ -53,26 +53,26 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg bg-[#123D2B] border border-[#D7B45A] rounded-2xl shadow-2xl p-6 text-[#F7F3E8] max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-6 text-[var(--theme-text-primary)] max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#176B45] pb-3 mb-4">
+        <div className="flex items-center justify-between border-b border-[var(--theme-border)] pb-3 mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">💎</span>
-            <h2 className="font-display font-extrabold text-xl text-[#F7F3E8]">
+            <h2 className="font-display font-extrabold text-xl text-[var(--theme-text-primary)]">
               Gem Shop
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-xs text-[#F7F3E8]/60 hover:text-[#F7F3E8] p-1.5"
+            className="text-xs text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] p-1.5 cursor-pointer"
           >
             ✕ Close
           </button>
         </div>
 
         {/* DEMO Disclaimer Banner */}
-        <div className="p-3 rounded-xl bg-amber-950/60 border border-[#D7B45A]/40 mb-4 text-xs text-amber-200">
+        <div className="p-3 rounded-xl bg-amber-950/60 border border-[var(--theme-accent)]/40 mb-4 text-xs text-amber-200">
           <span className="font-bold">⚠️ SIMULATED DEMO SHOP ONLY:</span> No real payment gateway is integrated, and no real money is ever charged or collected. All purchases are instant simulated credits.
         </div>
 
@@ -80,20 +80,20 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
         <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setActiveTab('packages')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
               activeTab === 'packages'
-                ? 'bg-[#D7B45A] text-[#08291F]'
-                : 'bg-[#08291F] text-[#F7F3E8]/70 hover:text-[#F7F3E8]'
+                ? 'bg-[var(--theme-accent)] text-[var(--theme-accent-text)]'
+                : 'bg-[var(--theme-bg-main)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
             }`}
           >
             Packages
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-[#D7B45A] text-[#08291F]'
-                : 'bg-[#08291F] text-[#F7F3E8]/70 hover:text-[#F7F3E8]'
+                ? 'bg-[var(--theme-accent)] text-[var(--theme-accent-text)]'
+                : 'bg-[var(--theme-bg-main)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
             }`}
           >
             Demo History ({purchases.length})
@@ -101,7 +101,7 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
         </div>
 
         {successMsg && (
-          <div className="mb-4 p-2.5 rounded-lg bg-[#176B45] border border-[#7CCB75] text-[#7CCB75] text-xs font-bold text-center">
+          <div className="mb-4 p-2.5 rounded-lg bg-[var(--theme-bg-elevated)] border border-[var(--theme-accent)] text-[var(--theme-accent)] text-xs font-bold text-center">
             {successMsg}
           </div>
         )}
@@ -111,31 +111,31 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
             {PACKAGES.map(pkg => (
               <div
                 key={pkg.gems}
-                className="relative flex flex-col justify-between p-4 rounded-xl bg-[#08291F] border border-[#176B45] hover:border-[#D7B45A] transition-all"
+                className="relative flex flex-col justify-between p-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-accent)] transition-all"
               >
                 {pkg.badge && (
-                  <span className="absolute -top-2 right-3 text-[10px] font-extrabold uppercase tracking-wider bg-[#D7B45A] text-[#08291F] px-2 py-0.5 rounded-full shadow">
+                  <span className="absolute -top-2 right-3 text-[10px] font-extrabold uppercase tracking-wider bg-[var(--theme-accent)] text-[var(--theme-accent-text)] px-2 py-0.5 rounded-full shadow">
                     {pkg.badge}
                   </span>
                 )}
                 <div className="text-center mb-3">
                   <span className="text-3xl mb-1 block">{pkg.icon}</span>
-                  <h3 className="font-display font-extrabold text-base text-[#F7F3E8]">
+                  <h3 className="font-display font-extrabold text-base text-[var(--theme-text-primary)]">
                     {pkg.name}
                   </h3>
-                  <div className="font-display font-black text-2xl text-[#7CCB75] my-1">
+                  <div className="font-display font-black text-2xl text-[var(--theme-accent)] my-1">
                     +{pkg.gems}
                   </div>
-                  <span className="text-[10px] text-[#F7F3E8]/60">Gems</span>
+                  <span className="text-[10px] text-[var(--theme-text-muted)]">Gems</span>
                 </div>
 
-                <div className="pt-2 border-t border-[#176B45] text-center">
-                  <div className="text-[11px] text-[#F7F3E8]/70 mb-2">
+                <div className="pt-2 border-t border-[var(--theme-border)] text-center">
+                  <div className="text-[11px] text-[var(--theme-text-muted)] mb-2">
                     Simulated <span className="line-through">{pkg.priceTag}</span> (DEMO Free)
                   </div>
                   <button
                     onClick={() => handleDemoBuy(pkg)}
-                    className="w-full py-2 px-3 rounded-lg bg-[#176B45] hover:bg-[#123D2B] text-[#F7F3E8] border border-[#7CCB75]/40 text-xs font-bold shadow-md transition-all active:scale-95"
+                    className="w-full py-2 px-3 rounded-lg bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer"
                   >
                     Claim Free Demo
                   </button>
@@ -146,23 +146,23 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
         ) : (
           <div className="space-y-2">
             {purchases.length === 0 ? (
-              <p className="text-xs text-[#F7F3E8]/60 text-center py-6">
+              <p className="text-xs text-[var(--theme-text-muted)] text-center py-6">
                 No simulated purchases recorded yet.
               </p>
             ) : (
               purchases.map(p => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[#08291F] border border-[#176B45] text-xs"
+                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-xs"
                 >
                   <div>
-                    <span className="font-bold text-[#F7F3E8]">{p.packageName}</span>
-                    <span className="text-[10px] text-[#D7B45A] ml-2 font-mono">DEMO</span>
-                    <div className="text-[10px] text-[#F7F3E8]/50">
+                    <span className="font-bold text-[var(--theme-text-primary)]">{p.packageName}</span>
+                    <span className="text-[10px] text-[var(--theme-accent)] ml-2 font-mono">DEMO</span>
+                    <div className="text-[10px] text-[var(--theme-text-muted)]">
                       {new Date(p.timestamp).toLocaleDateString()} {new Date(p.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
-                  <span className="font-display font-extrabold text-[#7CCB75] text-sm">
+                  <span className="font-display font-extrabold text-[var(--theme-accent)] text-sm">
                     +{p.gemAmount} 💎
                   </span>
                 </div>

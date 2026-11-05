@@ -34,10 +34,10 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
       {/* Hand Header info bar */}
       <div className="flex items-center justify-between w-full max-w-xl px-3 py-1 mb-1 text-xs">
         <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-sm text-[#F7F3E8]">
+          <span className="font-display font-bold text-sm text-[var(--theme-text-primary)]">
             Your Hand
           </span>
-          <span className="text-[#D7B45A] font-semibold bg-[#123D2B] px-2 py-0.5 rounded-full border border-[#D7B45A]/30">
+          <span className="text-[var(--theme-accent)] font-semibold bg-[var(--theme-bg-surface)] px-2 py-0.5 rounded-full border border-[var(--theme-border-subtle)]">
             {cardCount} {cardCount === 1 ? 'Card' : 'Cards'}
           </span>
           {cardCount === 1 && (
@@ -56,10 +56,10 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
             )}
             <button
               onClick={onDrawCard}
-              className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all active:scale-95 ${
+              className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all active:scale-95 cursor-pointer ${
                 !hasPlayableCard
-                  ? 'bg-[#D7B45A] text-[#08291F] border-[#D7B45A] shadow-md animate-pulse'
-                  : 'bg-[#176B45] text-[#F7F3E8] border-[#7CCB75]/40 hover:bg-[#123D2B]'
+                  ? 'bg-[var(--theme-accent)] text-[var(--theme-accent-text)] border-[var(--theme-accent)] shadow-md animate-pulse'
+                  : 'bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border-[var(--theme-border)] hover:bg-[var(--theme-bg-surface)]'
               }`}
             >
               {pendingPenalty ? `Draw +${pendingPenalty.amount} Penalty` : 'Draw 1 Card'}

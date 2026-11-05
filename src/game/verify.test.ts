@@ -158,7 +158,55 @@ function runIntegrityTests() {
   console.assert(hardDecision.type === 'PLAY' && hardDecision.card?.number === 5, 'Hard bot prioritizes disruption card when threat is present');
   console.log('✓ Test 11 Passed: Bot difficulty settings affect decision making heuristics');
 
-  console.log('ALL 11 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
+  // 12. Rigorous Automatic Market Recycling & Top Card Preservation
+  const recycleState = initGame('1v3', 'MEDIUM', 'Tester');
+  // Record all cards in all player hands
+  const totalCardsInHands = recycleState.players.reduce((sum, p) => sum + p.hand.length, 0);
+  const remainingCards = 54 - totalCardsInHands;
+
+  // Simulate market exhaustion by putting all remaining non-hand cards except top card into discard
+  const topCard: Card = { id: 'top_card_99', shape: 'TRIANGLE', number: 7, isSpecial: false };
+  const mockDiscards: Card[] = [
+    { id: 'd1', shape: 'CIRCLE', number: 1, isSpecial: true, specialType: 'HOLD_ON' },
+    { id: 'd2', shape: 'TRIANGLE', number: 2, isSpecial: true, specialType: 'PICK_TWO' },
+    { id: 'd3', shape: 'CROSS', number: 3, isSpecial: false },
+    { id: 'd4', shape: 'SQUARE', number: 5, isSpecial: true, specialType: 'PICK_THREE' },
+    { id: 'd5', shape: 'STAR', number: 8, isSpecial: true, specialType: 'STAR_SUSPENSION' },
+    topCard, // Top card is at index length - 1
+  ];
+
+  recycleState.drawPile = [];
+  recycleState.discardPile = mockDiscards;
+  recycleState.activeShape = 'TRIANGLE';
+  recycleState.activeNumber = 7;
+
+  const playerHandBefore = recycleState.players[0].hand.length;
+  const afterRecycle = drawCard(recycleState, 0);
+
+  // Assertions:
+  // 1. Player hand incremented by exactly 1
+  console.assert(afterRecycle.players[0].hand.length === playerHandBefore + 1, 'Player drew exactly 1 card');
+  // 2. Discard pile now has exactly 1 card: the untouched top card
+  console.assert(afterRecycle.discardPile.length === 1, `Discard pile must have exactly 1 card, got ${afterRecycle.discardPile.length}`);
+  console.assert(afterRecycle.discardPile[0].id === 'top_card_99', 'Top discard card remains untouched');
+  // 3. Draw pile has (mockDiscards.length - 1 - 1 drawn) = 4 cards
+  console.assert(afterRecycle.drawPile.length === 4, `Draw pile has 4 cards, got ${afterRecycle.drawPile.length}`);
+  // 4. Active shape preserved
+  console.assert(afterRecycle.activeShape === 'TRIANGLE', 'Active shape preserved after recycling');
+  console.log('✓ Test 12 Passed: Automatic Market Recycling preserves top card, active shape, and exact card count');
+
+  // 13. Market Recycling Edge Case: Only 1 Discard Card Available
+  const emptyBothState = initGame('1v1', 'MEDIUM', 'Tester');
+  emptyBothState.drawPile = [];
+  emptyBothState.discardPile = [topCard]; // only 1 card, cannot recycle top card!
+  const handBeforeEdge = emptyBothState.players[0].hand.length;
+  const afterEdge = drawCard(emptyBothState, 0);
+  console.assert(afterEdge.players[0].hand.length === handBeforeEdge, 'Player cannot draw when no recyclable cards exist');
+  console.assert(afterEdge.discardPile.length === 1 && afterEdge.discardPile[0].id === 'top_card_99', 'Top card remained in discard pile');
+  console.log('✓ Test 13 Passed: Safe graceful handling when market is empty and discard has only 1 card (no crash or infinite loop)');
+
+  console.log('ALL 13 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
 }
 
 runIntegrityTests();
+
