@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CardShape, GameState, GameMode, BotDifficulty, PlayerAvatar } from './game/types';
-import { initGame, playCard, drawCard, resolveWhotShape } from './game/engine';
+import { initGame, playCard, drawCard, resolveWhotShape, cancelWhotShape } from './game/engine';
 import { selectBotMove } from './game/bots';
 import { peekNextBotMove } from './game/peek';
 import {
@@ -66,6 +66,10 @@ export default function App() {
   const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
   const [isMultiplayerOpen, setIsMultiplayerOpen] = useState(false);
   const [isPeekOpen, setIsPeekOpen] = useState(false);
+
+  // WHOT 20 staging and card selection state
+  const [stagedWhotCardId, setStagedWhotCardId] = useState<string | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   // Bot activity indicators
   const [opponentActionText, setOpponentActionText] = useState<{ [playerId: string]: string | null }>({});
@@ -227,10 +231,17 @@ export default function App() {
     const card = humanPlayer.hand.find(c => c.id === cardId);
     if (!card) return;
 
+    // If card is WHOT 20, stage it for shape selection and explicit confirmation (can be cancelled!)
+    if (card.number === 20) {
+      setStagedWhotCardId(cardId);
+      setSelectedCardId(cardId);
+      return;
+    }
+
+    // Normal or special card: update stats and play immediately
     updateMatchStats(prev => ({
       ...prev,
       cardsPlayed: prev.cardsPlayed + 1,
-      whotsPlayed: card.number === 20 ? prev.whotsPlayed + 1 : prev.whotsPlayed,
       holdOnsPlayed: card.number === 1 ? prev.holdOnsPlayed + 1 : prev.holdOnsPlayed,
       generalMarketsPlayed: card.number === 14 ? prev.generalMarketsPlayed + 1 : prev.generalMarketsPlayed,
       penaltiesStacked: gameState.pendingPenalty && (card.number === 2 || card.number === 5)
@@ -239,26 +250,55 @@ export default function App() {
     }));
     setStats(getMatchStats());
 
-    if (card.number === 20) {
-      soundService.playSpecialCard('WHOT');
-      setGameState(prev => playCard(prev, 0, cardId));
+    if (card.isSpecial && card.specialType) {
+      soundService.playSpecialCard(card.specialType);
     } else {
-      if (card.isSpecial && card.specialType) {
-        soundService.playSpecialCard(card.specialType);
-      } else {
-        soundService.playCardPlay();
-      }
-      setGameState(prev => playCard(prev, 0, cardId));
+      soundService.playCardPlay();
     }
+
+    setSelectedCardId(null);
+    setGameState(prev => playCard(prev, 0, cardId));
   };
 
-  const handleSelectWhotShape = (shape: CardShape) => {
-    soundService.playCardPlay();
-    setGameState(prev => resolveWhotShape(prev, shape));
+  // Called when user confirms WHOT 20 shape in modal
+  const handleConfirmWhotShape = (shape: CardShape) => {
+    const cardIdToPlay = stagedWhotCardId || gameState.players[0].hand.find(c => c.number === 20)?.id;
+
+    if (!cardIdToPlay) {
+      // Fallback for engine WAITING_WHOT_SHAPE
+      soundService.playCardPlay();
+      setGameState(prev => resolveWhotShape(prev, shape));
+      setStagedWhotCardId(null);
+      setSelectedCardId(null);
+      return;
+    }
+
+    updateMatchStats(prev => ({
+      ...prev,
+      cardsPlayed: prev.cardsPlayed + 1,
+      whotsPlayed: prev.whotsPlayed + 1,
+    }));
+    setStats(getMatchStats());
+
+    soundService.playSpecialCard('WHOT');
+    setGameState(prev => playCard(prev, 0, cardIdToPlay, shape));
+    setStagedWhotCardId(null);
+    setSelectedCardId(null);
+  };
+
+  // Called when user cancels WHOT 20 in modal
+  const handleCancelWhotShape = () => {
+    setStagedWhotCardId(null);
+    setSelectedCardId(null);
+    if (gameState.status === 'WAITING_WHOT_SHAPE') {
+      setGameState(prev => cancelWhotShape(prev));
+    }
   };
 
   const handleHumanDraw = () => {
     if (gameState.currentPlayerIndex !== 0) return;
+    setSelectedCardId(null);
+    setStagedWhotCardId(null);
     soundService.playCardDraw();
     setGameState(prev => drawCard(prev, 0));
   };
@@ -355,15 +395,15 @@ export default function App() {
           onOpenMultiplayer={() => setIsMultiplayerOpen(true)}
         />
       ) : (
-        <main className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-2 sm:p-4 animate-fade-in">
-          {/* Felt Card Table Canvas with Dynamic Theme */}
-          <div className="felt-table relative w-full rounded-3xl border-4 border-[var(--theme-table-border)] shadow-2xl p-2 sm:p-5 flex flex-col justify-between min-h-[580px] md:min-h-[640px]">
+        <main className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-1 sm:p-3 animate-fade-in">
+          {/* Dedicated Responsive Game Table Canvas with Dynamic Theme */}
+          <div className="felt-table relative w-full rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-[var(--theme-table-border)] shadow-2xl p-2 sm:p-4 flex flex-col justify-between h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-4.5rem)] max-h-[860px] min-h-[500px] overflow-hidden">
             
-            {/* Top Row Opponents: Layout dynamically adjusts based on active player count */}
-            <div className="w-full">
+            {/* REGION A: TOP REGION — All Computer Opponents dynamically adapting with ZERO clipping */}
+            <div className="w-full shrink-0 pt-0.5 sm:pt-1">
               {opponents.length === 1 && (
-                /* 1v1: Single bot centered at top */
-                <div className="flex justify-center pt-1">
+                /* 1v1: Single opponent centered at top */
+                <div className="flex justify-center items-center py-1">
                   <OpponentSeat
                     player={opponents[0]}
                     isCurrentTurn={gameState.currentPlayerIndex === 1}
@@ -374,8 +414,8 @@ export default function App() {
               )}
 
               {opponents.length === 2 && (
-                /* 1v2: Two bots spaced nicely at top */
-                <div className="flex justify-around items-center pt-1 px-4">
+                /* 1v2: Two opponents evenly spaced at top */
+                <div className="flex justify-around items-center w-full max-w-sm sm:max-w-md mx-auto py-1">
                   <OpponentSeat
                     player={opponents[0]}
                     isCurrentTurn={gameState.currentPlayerIndex === 1}
@@ -392,91 +432,77 @@ export default function App() {
               )}
 
               {opponents.length === 3 && (
-                /* 1v3: Middle bot at top */
-                <div className="flex justify-center pt-1">
+                /* 1v3: All three opponents arranged in a clean, unclipped 3-column row */
+                <div className="grid grid-cols-3 gap-1 sm:gap-4 w-full max-w-md sm:max-w-xl mx-auto py-1 items-start justify-items-center">
+                  <OpponentSeat
+                    player={opponents[0]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 1}
+                    compact
+                    lastActionText={opponentActionText[opponents[0].id]}
+                  />
                   <OpponentSeat
                     player={opponents[1]}
                     isCurrentTurn={gameState.currentPlayerIndex === 2}
-                    position="top"
+                    compact
                     lastActionText={opponentActionText[opponents[1].id]}
+                  />
+                  <OpponentSeat
+                    player={opponents[2]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 3}
+                    compact
+                    lastActionText={opponentActionText[opponents[2].id]}
                   />
                 </div>
               )}
 
               {opponents.length === 4 && (
-                /* 1v4: Two bots at top center */
-                <div className="flex justify-center gap-8 sm:gap-16 pt-1">
+                /* 1v4: All four opponents arranged in a clean, unclipped 4-column row */
+                <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full max-w-lg sm:max-w-2xl mx-auto py-1 items-start justify-items-center">
+                  <OpponentSeat
+                    player={opponents[0]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 1}
+                    compact
+                    lastActionText={opponentActionText[opponents[0].id]}
+                  />
                   <OpponentSeat
                     player={opponents[1]}
                     isCurrentTurn={gameState.currentPlayerIndex === 2}
-                    position="topLeft"
+                    compact
                     lastActionText={opponentActionText[opponents[1].id]}
                   />
                   <OpponentSeat
                     player={opponents[2]}
                     isCurrentTurn={gameState.currentPlayerIndex === 3}
-                    position="topRight"
+                    compact
                     lastActionText={opponentActionText[opponents[2].id]}
+                  />
+                  <OpponentSeat
+                    player={opponents[3]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 4}
+                    compact
+                    lastActionText={opponentActionText[opponents[3].id]}
                   />
                 </div>
               )}
             </div>
 
-            {/* Middle Row: Left Opponent(s) + Center Table Play Arena + Right Opponent(s) */}
-            <div className="flex items-center justify-between w-full my-auto px-1 sm:px-4 gap-2">
-              {/* Left Opponent */}
-              <div className="shrink-0 min-w-[70px]">
-                {opponents.length >= 3 ? (
-                  <OpponentSeat
-                    player={opponents[0]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 1}
-                    position="left"
-                    lastActionText={opponentActionText[opponents[0].id]}
-                  />
-                ) : (
-                  <div className="w-16" />
-                )}
-              </div>
-
-              {/* Central Play Arena: Market Draw Pile & Discard Pile */}
-              <div className="flex-1 flex justify-center">
-                <CenterTable
-                  drawPileCount={gameState.drawPile.length}
-                  discardPile={gameState.discardPile}
-                  activeShape={gameState.activeShape}
-                  activeNumber={gameState.activeNumber}
-                  pendingPenalty={gameState.pendingPenalty}
-                  isHumanTurn={isHumanTurn}
-                  canHumanDraw={isHumanTurn}
-                  onDrawClick={handleHumanDraw}
-                  statusMessage={turnBanner}
-                />
-              </div>
-
-              {/* Right Opponent */}
-              <div className="shrink-0 min-w-[70px]">
-                {opponents.length === 3 ? (
-                  <OpponentSeat
-                    player={opponents[2]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 3}
-                    position="right"
-                    lastActionText={opponentActionText[opponents[2].id]}
-                  />
-                ) : opponents.length === 4 ? (
-                  <OpponentSeat
-                    player={opponents[3]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 4}
-                    position="right"
-                    lastActionText={opponentActionText[opponents[3].id]}
-                  />
-                ) : (
-                  <div className="w-16" />
-                )}
-              </div>
+            {/* REGION B: CENTRAL PLAY ARENA — Market Draw Pile, Discard Pile & Match Status */}
+            <div className="flex-1 flex items-center justify-center w-full my-auto py-1 px-1 sm:px-4">
+              <CenterTable
+                drawPileCount={gameState.drawPile.length}
+                discardPile={gameState.discardPile}
+                activeShape={gameState.activeShape}
+                activeNumber={gameState.activeNumber}
+                pendingPenalty={gameState.pendingPenalty}
+                isHumanTurn={isHumanTurn}
+                canHumanDraw={isHumanTurn}
+                onDrawClick={handleHumanDraw}
+                statusMessage={turnBanner}
+              />
             </div>
 
-            {/* Bottom Row: Human Player's Hand */}
-            <div className="w-full pt-1">
+            {/* REGION C: BOTTOM REGION — Human Player's Hand & Interactive Controls */}
+            <div className="w-full shrink-0 pb-0.5 sm:pb-1">
               <PlayerHand
                 hand={humanPlayer.hand}
                 activeShape={gameState.activeShape}
@@ -484,23 +510,27 @@ export default function App() {
                 pendingPenalty={gameState.pendingPenalty}
                 isHumanTurn={isHumanTurn}
                 hintsEnabled={settings.hintsEnabled}
+                selectedCardId={selectedCardId}
+                onSelectCard={setSelectedCardId}
                 onPlayCard={handleHumanPlayCard}
                 onDrawCard={handleHumanDraw}
               />
             </div>
           </div>
 
-          {/* Live Match Feed below the table */}
-          <div className="mt-3">
+          {/* Live Match Feed below the table (collapsible on mobile) */}
+          <div className="mt-1 sm:mt-2 shrink-0">
             <GameLogView logs={gameState.log} />
           </div>
         </main>
       )}
 
-      {/* WHOT Shape Selection Modal */}
+      {/* WHOT Shape Selection Modal with Cancellation & Confirmation */}
       <WhotShapeModal
-        isOpen={gameState.status === 'WAITING_WHOT_SHAPE'}
-        onSelectShape={handleSelectWhotShape}
+        isOpen={stagedWhotCardId !== null || gameState.status === 'WAITING_WHOT_SHAPE'}
+        onConfirmShape={handleConfirmWhotShape}
+        onCancel={handleCancelWhotShape}
+        initialShape={gameState.activeShape !== 'WHOT' ? gameState.activeShape : 'CIRCLE'}
       />
 
       {/* Signature Daily Free / Paid Peek Modal */}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardShape, PendingPenalty } from '../game/types';
 import { CardView } from './CardView';
 import { isCardPlayable } from '../game/rules';
@@ -10,6 +10,8 @@ interface PlayerHandProps {
   pendingPenalty: PendingPenalty | null;
   isHumanTurn: boolean;
   hintsEnabled?: boolean;
+  selectedCardId?: string | null;
+  onSelectCard?: (cardId: string | null) => void;
   onPlayCard: (cardId: string) => void;
   onDrawCard: () => void;
 }
@@ -21,42 +23,93 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
   pendingPenalty,
   isHumanTurn,
   hintsEnabled = true,
+  selectedCardId: externalSelectedId,
+  onSelectCard,
   onPlayCard,
   onDrawCard,
 }) => {
+  const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
+  const selectedCardId = externalSelectedId !== undefined ? externalSelectedId : internalSelectedId;
+
   const cardCount = hand.length;
   const hasPlayableCard = hand.some(card =>
     isCardPlayable(card, activeShape, activeNumber, pendingPenalty)
   );
 
+  const handleCardClick = (card: Card) => {
+    if (!isHumanTurn) return;
+
+    const isLegal = isCardPlayable(card, activeShape, activeNumber, pendingPenalty);
+    if (!isLegal) return;
+
+    // If card is WHOT 20, immediately trigger shape modal via onPlayCard (which handles staging/confirm/cancel)
+    if (card.number === 20) {
+      if (onSelectCard) onSelectCard(card.id);
+      else setInternalSelectedId(card.id);
+      onPlayCard(card.id);
+      return;
+    }
+
+    // For other cards: if already selected, play it immediately
+    if (selectedCardId === card.id) {
+      onPlayCard(card.id);
+      if (onSelectCard) onSelectCard(null);
+      else setInternalSelectedId(null);
+    } else {
+      // First tap selects the card and provides tactile feedback
+      if (onSelectCard) onSelectCard(card.id);
+      else setInternalSelectedId(card.id);
+    }
+  };
+
+  const handlePlaySelected = () => {
+    if (!selectedCardId || !isHumanTurn) return;
+    onPlayCard(selectedCardId);
+    if (onSelectCard) onSelectCard(null);
+    else setInternalSelectedId(null);
+  };
+
+  const selectedCard = hand.find(c => c.id === selectedCardId);
+
   return (
-    <div className="w-full max-w-4xl mx-auto px-2 md:px-4 pb-2 pt-1 flex flex-col items-center select-none">
-      {/* Hand Header info bar */}
-      <div className="flex items-center justify-between w-full max-w-xl px-3 py-1 mb-1 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-sm text-[var(--theme-text-primary)]">
+    <div className="w-full max-w-4xl mx-auto px-1 sm:px-4 pb-1 pt-0.5 flex flex-col items-center select-none">
+      {/* Hand Header info & quick action bar */}
+      <div className="flex items-center justify-between w-full max-w-xl px-2 sm:px-3 py-1 mb-0.5 text-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="font-display font-black text-xs sm:text-sm text-[var(--theme-text-primary)]">
             Your Hand
           </span>
-          <span className="text-[var(--theme-accent)] font-semibold bg-[var(--theme-bg-surface)] px-2 py-0.5 rounded-full border border-[var(--theme-border-subtle)]">
+          <span className="text-[var(--theme-accent)] font-bold bg-[var(--theme-bg-surface)] px-2 py-0.5 rounded-full border border-[var(--theme-border-subtle)] text-[11px] sm:text-xs">
             {cardCount} {cardCount === 1 ? 'Card' : 'Cards'}
           </span>
           {cardCount === 1 && (
-            <span className="animate-pulse font-display font-extrabold text-[#B91C1C] bg-[#FDFBF7] px-2 py-0.5 rounded-full text-[11px] shadow-md tracking-wider">
+            <span className="animate-pulse font-display font-black text-[#B91C1C] bg-[#FDFBF7] px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] shadow-md tracking-wider">
               ⚠️ LAST CARD!
             </span>
           )}
         </div>
 
         {isHumanTurn && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* If a card is selected, show prominent 'Play Card' button */}
+            {selectedCard && selectedCard.number !== 20 && (
+              <button
+                onClick={handlePlaySelected}
+                className="px-3 py-1 text-xs font-display font-extrabold rounded-lg bg-[var(--theme-accent)] text-[var(--theme-accent-text)] border border-[var(--theme-accent)] shadow-md animate-pulse cursor-pointer transition-all active:scale-95"
+              >
+                Play Selected
+              </button>
+            )}
+
             {!hasPlayableCard && (
-              <span className="text-amber-300 font-medium text-[11px] hidden sm:inline">
-                No matching cards. Go to market:
+              <span className="text-amber-300 font-medium text-[10px] sm:text-[11px] hidden md:inline">
+                No matching cards:
               </span>
             )}
+
             <button
               onClick={onDrawCard}
-              className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all active:scale-95 cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-bold rounded-lg border transition-all active:scale-95 cursor-pointer min-h-[32px] flex items-center ${
                 !hasPlayableCard
                   ? 'bg-[var(--theme-accent)] text-[var(--theme-accent-text)] border-[var(--theme-accent)] shadow-md animate-pulse'
                   : 'bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border-[var(--theme-border)] hover:bg-[var(--theme-bg-surface)]'
@@ -68,39 +121,51 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
         )}
       </div>
 
-      {/* Cards container: Horizontally scrollable and fanned on small screens */}
-      <div className="w-full flex items-center justify-center overflow-x-auto no-scrollbar py-4 px-2 min-h-[140px] md:min-h-[170px]">
-        <div className="flex items-center justify-center -space-x-4 md:-space-x-6 hover:space-x-1 transition-all duration-300">
+      {/* Cards container: Horizontally scrollable with smooth touch ergonomics */}
+      <div className="w-full flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar py-3 px-3 min-h-[125px] sm:min-h-[155px] touch-pan-x">
+        <div
+          className={`flex items-end ${
+            cardCount > 6 ? '-space-x-3 sm:-space-x-5' : 'space-x-1.5 sm:space-x-3'
+          } px-4 transition-all duration-200`}
+        >
           {hand.map((card, index) => {
             const isLegal = isCardPlayable(card, activeShape, activeNumber, pendingPenalty);
             const playable = isHumanTurn && isLegal;
+            const isSelected = selectedCardId === card.id;
             const showHighlight = hintsEnabled ? playable : false;
             const showDim = hintsEnabled && isHumanTurn && !isLegal;
-            const rotation = (index - (cardCount - 1) / 2) * 2.5;
 
             return (
               <div
                 key={card.id}
-                className="transform transition-transform duration-200 hover:z-30 hover:scale-110"
+                className={`transform transition-all duration-200 shrink-0 ${
+                  isSelected ? 'z-30 -translate-y-3.5 scale-105' : 'hover:z-20 hover:-translate-y-1'
+                }`}
                 style={{
-                  transform: `rotate(${rotation}deg)`,
+                  zIndex: isSelected ? 30 : index + 1,
                 }}
               >
                 <CardView
                   card={card}
-                  size="md"
+                  size="hand"
                   isPlayable={playable}
-                  isSelected={showHighlight}
-                  onClick={() => {
-                    if (playable) onPlayCard(card.id);
-                  }}
-                  className={showDim ? 'opacity-65 filter grayscale-[20%]' : ''}
+                  isSelected={isSelected || (showHighlight && !selectedCardId)}
+                  onClick={() => handleCardClick(card)}
+                  className={`${showDim ? 'opacity-60 filter grayscale-[25%]' : ''}`}
                 />
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Scroll indicator hint if player has many cards on mobile */}
+      {cardCount > 5 && (
+        <div className="text-[10px] text-[var(--theme-text-muted)] -mt-1 mb-0.5 sm:hidden">
+          Swipe sideways to view all cards
+        </div>
+      )}
     </div>
   );
 };
+

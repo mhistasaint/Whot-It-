@@ -7,7 +7,7 @@ interface CardViewProps {
   isPlayable?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'table' | 'hand';
   className?: string;
   style?: React.CSSProperties;
 }
@@ -69,6 +69,8 @@ export const CardView: React.FC<CardViewProps> = ({
     md: 'w-20 h-28 md:w-24 md:h-34 text-sm rounded-lg shadow-md',
     lg: 'w-24 h-34 md:w-28 md:h-40 text-base rounded-lg shadow-lg',
     xl: 'w-32 h-44 md:w-36 md:h-52 text-lg rounded-xl shadow-xl',
+    table: 'w-20 h-28 sm:w-24 sm:h-34 md:w-28 md:h-40 text-xs sm:text-sm md:text-base rounded-lg shadow-md shrink-0',
+    hand: 'w-20 h-28 sm:w-22 sm:h-32 md:w-24 md:h-34 text-xs sm:text-sm rounded-lg shadow-md shrink-0',
   }[size];
 
   // If face down, render authentic textured Nigerian Whot card back themed to active palette
@@ -77,7 +79,7 @@ export const CardView: React.FC<CardViewProps> = ({
       <div
         onClick={onClick}
         style={style}
-        className={`relative ${sizeClasses} ${className} bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)]/40 overflow-hidden flex items-center justify-center cursor-pointer transition-transform duration-200 select-none`}
+        className={`relative ${sizeClasses} ${className} bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)]/40 overflow-hidden flex items-center justify-center cursor-pointer transition-transform duration-200 select-none touch-manipulation`}
       >
         {/* Geometric Ankara patterned back */}
         <div className="absolute inset-1 border border-[var(--theme-gold)]/20 rounded flex items-center justify-center p-1 bg-[var(--theme-bg-main)]">
@@ -98,11 +100,11 @@ export const CardView: React.FC<CardViewProps> = ({
     <div
       onClick={isPlayable && onClick ? onClick : undefined}
       style={style}
-      className={`relative ${sizeClasses} ${className} bg-[#FDFBF7] text-[#B91C1C] border border-[#B91C1C]/30 select-none flex flex-col justify-between p-1.5 md:p-2 transition-all duration-200 ${
+      className={`relative ${sizeClasses} ${className} bg-[#FDFBF7] text-[#B91C1C] border border-[#B91C1C]/30 select-none flex flex-col justify-between p-1.5 md:p-2 transition-all duration-200 touch-manipulation ${
         isPlayable
-          ? 'cursor-pointer hover:-translate-y-3 hover:shadow-xl hover:ring-2 hover:ring-[#D7B45A] ring-1 ring-[#D7B45A]/50'
+          ? 'cursor-pointer hover:-translate-y-2.5 hover:shadow-xl hover:ring-2 hover:ring-[var(--theme-accent)] ring-1 ring-[var(--theme-accent)]/50'
           : 'cursor-default opacity-90'
-      } ${isSelected ? '-translate-y-4 ring-2 ring-[#7CCB75] shadow-2xl' : ''}`}
+      } ${isSelected ? '-translate-y-3.5 ring-2 ring-[var(--theme-gold)] shadow-2xl scale-105' : ''}`}
     >
       {/* Top Left Corner */}
       <div className="flex flex-col items-center leading-none self-start">

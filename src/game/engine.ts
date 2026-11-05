@@ -494,6 +494,19 @@ export function resolveWhotShape(state: GameState, chosenShape: CardShape): Game
 }
 
 /**
+ * Called when human player cancels shape selection after staging WHOT 20.
+ * Reverts state to normal PLAYING without discarding the card or advancing the turn.
+ */
+export function cancelWhotShape(state: GameState): GameState {
+  if (state.status !== 'WAITING_WHOT_SHAPE') return state;
+  return {
+    ...state,
+    status: 'PLAYING',
+    pendingWhotPlayerIndex: null,
+  };
+}
+
+/**
  * Handles drawing card(s) on a player's turn.
  * Automatically recycles market if depleted, while keeping top discard untouched.
  */

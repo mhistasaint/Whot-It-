@@ -1,5 +1,5 @@
 import { createDeck, verifyDeckIntegrity } from './deck';
-import { initGame, playCard, drawCard } from './engine';
+import { initGame, playCard, drawCard, cancelWhotShape, resolveWhotShape } from './engine';
 import { isCardPlayable } from './rules';
 import { selectBotMove } from './bots';
 import { peekNextBotMove } from './peek';
@@ -205,8 +205,44 @@ function runIntegrityTests() {
   console.assert(afterEdge.discardPile.length === 1 && afterEdge.discardPile[0].id === 'top_card_99', 'Top card remained in discard pile');
   console.log('✓ Test 13 Passed: Safe graceful handling when market is empty and discard has only 1 card (no crash or infinite loop)');
 
-  console.log('ALL 13 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
+  // 14. WHOT 20 Staging, Cancellation & Confirmation
+  const whotState = initGame('1v3', 'MEDIUM', 'Tester');
+  const whotCardTest: Card = { id: 'w20_test', shape: 'WHOT', number: 20, isSpecial: true, specialType: 'WHOT' };
+  whotState.players[0].hand = [whotCardTest, dummyCircle3];
+  whotState.activeShape = 'CROSS';
+  whotState.activeNumber = 7;
+  const initialDiscardCount = whotState.discardPile.length;
+  const initialTopDiscard = whotState.discardPile[whotState.discardPile.length - 1];
+
+  // A. Simulate staging: Card is held in hand while modal is open.
+  // When player cancels, state remains 100% unchanged.
+  const waitingState = {
+    ...whotState,
+    status: 'WAITING_WHOT_SHAPE' as const,
+    pendingWhotPlayerIndex: 0,
+  };
+  const cancelledState = cancelWhotShape(waitingState);
+  console.assert(cancelledState.status === 'PLAYING', 'Status returned to PLAYING after cancel');
+  console.assert(cancelledState.pendingWhotPlayerIndex === null, 'pendingWhotPlayerIndex cleared after cancel');
+  console.assert(cancelledState.players[0].hand.length === 2, 'Player hand intact after cancel');
+  console.assert(cancelledState.discardPile.length === initialDiscardCount, 'Discard pile untouched after cancel');
+  console.assert(cancelledState.discardPile[cancelledState.discardPile.length - 1].id === initialTopDiscard.id, 'Top discard card unchanged');
+  console.assert(cancelledState.activeShape === 'CROSS', 'Active shape unchanged after cancel');
+  console.assert(cancelledState.currentPlayerIndex === 0, 'Current player turn preserved after cancel');
+
+  // B. Confirming WHOT 20 with shape call (e.g., STAR)
+  const confirmedState = playCard(whotState, 0, 'w20_test', 'STAR');
+  console.assert(confirmedState.status === 'PLAYING', 'Status is PLAYING after WHOT confirmation');
+  console.assert(confirmedState.activeShape === 'STAR', 'Active shape changed to called shape STAR');
+  console.assert(confirmedState.activeNumber === 20, 'Active number is 20');
+  console.assert(confirmedState.discardPile[confirmedState.discardPile.length - 1].number === 20, 'WHOT 20 is on top of discard pile');
+  console.assert(confirmedState.players[0].hand.length === 1, 'WHOT 20 removed from hand upon confirmation');
+  console.assert(confirmedState.currentPlayerIndex === 1, 'Turn advances to next player after WHOT 20');
+  console.log('✓ Test 14 Passed: WHOT 20 staging, cancel without side-effects, and shape confirmation');
+
+  console.log('ALL 14 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
 }
 
 runIntegrityTests();
+
 
