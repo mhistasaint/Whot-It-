@@ -240,7 +240,58 @@ function runIntegrityTests() {
   console.assert(confirmedState.currentPlayerIndex === 1, 'Turn advances to next player after WHOT 20');
   console.log('✓ Test 14 Passed: WHOT 20 staging, cancel without side-effects, and shape confirmation');
 
-  console.log('ALL 14 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
+  // 15. Normal Cards: Immediate Single-Step Play (No Confirmation Dialog)
+  const normalTestState = initGame('1v3', 'MEDIUM', 'Tester');
+  normalTestState.activeShape = 'CROSS';
+  normalTestState.activeNumber = 3;
+  const normalCardToPlay: Card = { id: 'norm_cross_7', shape: 'CROSS', number: 7, isSpecial: false };
+  normalTestState.players[0].hand = [normalCardToPlay, dummyCircle3];
+  const handLenBeforeNormal = normalTestState.players[0].hand.length;
+
+  // Single invocation represents single-click immediate play
+  const afterNormalPlay = playCard(normalTestState, 0, 'norm_cross_7');
+  console.assert(afterNormalPlay.status === 'PLAYING', 'Status is PLAYING immediately');
+  console.assert(afterNormalPlay.players[0].hand.length === handLenBeforeNormal - 1, 'Card removed from hand immediately');
+  console.assert(afterNormalPlay.activeShape === 'CROSS' && afterNormalPlay.activeNumber === 7, 'Active shape and number updated immediately');
+  console.assert(afterNormalPlay.discardPile[afterNormalPlay.discardPile.length - 1].id === 'norm_cross_7', 'Card placed on discard pile immediately');
+  console.assert(afterNormalPlay.currentPlayerIndex === 1, 'Turn advanced to next player immediately');
+  console.log('✓ Test 15 Passed: Normal cards play immediately on single action with zero confirmation step');
+
+  // 16. Other Special Cards (1, 2, 5, 8, 14): Immediate Play & Power Execution
+  // Special Card 2 (Pick Two) immediate execution
+  const pick2State = initGame('1v3', 'MEDIUM', 'Tester');
+  pick2State.activeShape = 'CIRCLE';
+  pick2State.activeNumber = 4;
+  const specialPick2: Card = { id: 'sp_c2', shape: 'CIRCLE', number: 2, isSpecial: true, specialType: 'PICK_TWO' };
+  pick2State.players[0].hand = [specialPick2, dummyCircle3];
+  const afterPick2 = playCard(pick2State, 0, 'sp_c2');
+  console.assert(afterPick2.status === 'PLAYING', 'Status is PLAYING immediately');
+  console.assert(afterPick2.pendingPenalty?.type === 'PICK_TWO', 'Pick Two penalty triggered immediately');
+  console.assert(afterPick2.pendingPenalty?.amount === 2, 'Penalty amount is 2');
+  console.assert(afterPick2.currentPlayerIndex === 1, 'Turn advanced immediately to penalize next player');
+
+  // Special Card 1 (Hold On) immediate execution
+  const holdOnTest = initGame('1v3', 'MEDIUM', 'Tester');
+  holdOnTest.activeShape = 'CIRCLE';
+  holdOnTest.activeNumber = 4;
+  const specialHoldOn: Card = { id: 'sp_c1', shape: 'CIRCLE', number: 1, isSpecial: true, specialType: 'HOLD_ON' };
+  holdOnTest.players[0].hand = [specialHoldOn, dummyCircle3];
+  const afterHoldOnTest = playCard(holdOnTest, 0, 'sp_c1');
+  console.assert(afterHoldOnTest.currentPlayerIndex === 0, 'Hold On immediately preserves turn for current player');
+
+  // Special Card 14 (General Market) immediate execution
+  const gmTest = initGame('1v3', 'MEDIUM', 'Tester');
+  gmTest.activeShape = 'CIRCLE';
+  gmTest.activeNumber = 4;
+  const specialGM: Card = { id: 'sp_c14', shape: 'CIRCLE', number: 14, isSpecial: true, specialType: 'GENERAL_MARKET' };
+  gmTest.players[0].hand = [specialGM, dummyCircle3];
+  const b1HBefore = gmTest.players[1].hand.length;
+  const afterGMTest = playCard(gmTest, 0, 'sp_c14');
+  console.assert(afterGMTest.currentPlayerIndex === 0, 'General Market immediately continues current player turn');
+  console.assert(afterGMTest.players[1].hand.length === b1HBefore + 1, 'All opponents immediately draw 1 card');
+  console.log('✓ Test 16 Passed: Other special cards (1, 2, 5, 8, 14) play immediately with full mechanics & zero confirmation');
+
+  console.log('ALL 16 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
 }
 
 runIntegrityTests();

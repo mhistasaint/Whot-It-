@@ -42,7 +42,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
     const isLegal = isCardPlayable(card, activeShape, activeNumber, pendingPenalty);
     if (!isLegal) return;
 
-    // If card is WHOT 20, immediately trigger shape modal via onPlayCard (which handles staging/confirm/cancel)
+    // WHOT 20 ONLY: Open shape selection modal with cancellation/confirmation
     if (card.number === 20) {
       if (onSelectCard) onSelectCard(card.id);
       else setInternalSelectedId(card.id);
@@ -50,26 +50,12 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
       return;
     }
 
-    // For other cards: if already selected, play it immediately
-    if (selectedCardId === card.id) {
-      onPlayCard(card.id);
-      if (onSelectCard) onSelectCard(null);
-      else setInternalSelectedId(null);
-    } else {
-      // First tap selects the card and provides tactile feedback
-      if (onSelectCard) onSelectCard(card.id);
-      else setInternalSelectedId(card.id);
-    }
-  };
-
-  const handlePlaySelected = () => {
-    if (!selectedCardId || !isHumanTurn) return;
-    onPlayCard(selectedCardId);
+    // NORMAL CARDS AND OTHER SPECIAL CARDS (1, 2, 5, 8, 14):
+    // Play immediately on first click! No confirmation modal, no second click, no prompt.
     if (onSelectCard) onSelectCard(null);
     else setInternalSelectedId(null);
+    onPlayCard(card.id);
   };
-
-  const selectedCard = hand.find(c => c.id === selectedCardId);
 
   return (
     <div className="w-full max-w-4xl mx-auto px-1 sm:px-4 pb-1 pt-0.5 flex flex-col items-center select-none">
@@ -91,16 +77,6 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
 
         {isHumanTurn && (
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* If a card is selected, show prominent 'Play Card' button */}
-            {selectedCard && selectedCard.number !== 20 && (
-              <button
-                onClick={handlePlaySelected}
-                className="px-3 py-1 text-xs font-display font-extrabold rounded-lg bg-[var(--theme-accent)] text-[var(--theme-accent-text)] border border-[var(--theme-accent)] shadow-md animate-pulse cursor-pointer transition-all active:scale-95"
-              >
-                Play Selected
-              </button>
-            )}
-
             {!hasPlayableCard && (
               <span className="text-amber-300 font-medium text-[10px] sm:text-[11px] hidden md:inline">
                 No matching cards:
@@ -149,7 +125,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                   card={card}
                   size="hand"
                   isPlayable={playable}
-                  isSelected={isSelected || (showHighlight && !selectedCardId)}
+                  isSelected={isSelected}
                   onClick={() => handleCardClick(card)}
                   className={`${showDim ? 'opacity-60 filter grayscale-[25%]' : ''}`}
                 />
