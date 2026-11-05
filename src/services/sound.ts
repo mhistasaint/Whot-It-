@@ -173,6 +173,15 @@ class SoundEffects {
     this.playTone(987.77, now + 0.08, 0.15, 'sine', 0.2);
   }
 
+  public playTimerWarning() {
+    if (!this.soundEnabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    this.playTone(880, now, 0.05, 'square', 0.08);
+  }
+
   public playVictory() {
     if (!this.soundEnabled) return;
     this.initCtx();

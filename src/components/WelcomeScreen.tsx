@@ -1,11 +1,12 @@
-import React from 'react';
-import { Play, LogIn, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, Lock, Settings } from 'lucide-react';
 import { CardShape } from '../game/types';
 import { ShapeIcon } from './CardView';
+import { SignInLockedModal } from './SignInLockedModal';
 
 interface WelcomeScreenProps {
   onPlay: () => void;
-  onSignIn: () => void;
+  onSignIn?: () => void;
   onSettings: () => void;
 }
 
@@ -23,6 +24,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onSignIn,
   onSettings,
 }) => {
+  const [isLockedModalOpen, setIsLockedModalOpen] = useState(false);
+
+  const handleSignInClick = () => {
+    setIsLockedModalOpen(true);
+  };
+
   return (
     <div className="relative w-full min-h-screen flex flex-col items-center justify-center px-4 py-8 select-none overflow-hidden text-[var(--theme-text-primary)] bg-[var(--theme-bg-main)] animate-fade-in">
       
@@ -90,7 +97,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons: Play, Sign In, Settings with appropriate icons */}
+        {/* Action Buttons: Play, Locked Sign In, Settings with appropriate icons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8 w-full max-w-md">
           {/* Play Button */}
           <button
@@ -101,13 +108,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <span>Play</span>
           </button>
 
-          {/* Sign In Button */}
+          {/* Locked Sign In Button */}
           <button
-            onClick={onSignIn}
-            className="w-full sm:flex-1 py-3.5 px-5 rounded-2xl bg-[var(--theme-bg-surface)] hover:bg-[var(--theme-bg-elevated)] border-2 border-[var(--theme-gold)] text-[var(--theme-gold)] font-display font-extrabold text-sm sm:text-base transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 active:scale-95"
+            onClick={handleSignInClick}
+            className="w-full sm:flex-1 py-3.5 px-4 rounded-2xl bg-[var(--theme-bg-surface)] hover:bg-[var(--theme-bg-elevated)] border-2 border-[var(--theme-border)] hover:border-[var(--theme-gold)]/60 text-[var(--theme-text-primary)] font-display font-extrabold text-sm sm:text-base transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 active:scale-95 relative group"
+            title="Account credentials unlock when Multiplayer goes live"
           >
-            <LogIn className="w-4 h-4" />
+            <Lock className="w-4 h-4 text-[var(--theme-gold)]" />
             <span>Sign In</span>
+            <span className="text-[9px] uppercase tracking-wider font-extrabold bg-[var(--theme-gold)]/15 text-[var(--theme-gold)] px-1.5 py-0.5 rounded-full border border-[var(--theme-gold)]/30">
+              Locked
+            </span>
           </button>
 
           {/* Settings Button */}
@@ -122,6 +133,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
       </div>
+
+      {/* Sign In Locked Modal */}
+      <SignInLockedModal
+        isOpen={isLockedModalOpen}
+        onClose={() => setIsLockedModalOpen(false)}
+        onPlayGuest={onPlay}
+      />
     </div>
   );
 };

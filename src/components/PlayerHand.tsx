@@ -14,6 +14,7 @@ interface PlayerHandProps {
   onSelectCard?: (cardId: string | null) => void;
   onPlayCard: (cardId: string) => void;
   onDrawCard: () => void;
+  turnTimeRemaining?: number;
 }
 
 export const PlayerHand: React.FC<PlayerHandProps> = ({
@@ -27,6 +28,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
   onSelectCard,
   onPlayCard,
   onDrawCard,
+  turnTimeRemaining,
 }) => {
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
   const selectedCardId = externalSelectedId !== undefined ? externalSelectedId : internalSelectedId;
@@ -71,6 +73,18 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
           {cardCount === 1 && (
             <span className="animate-pulse font-display font-black text-[#B91C1C] bg-[#FDFBF7] px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] shadow-md tracking-wider">
               ⚠️ LAST CARD!
+            </span>
+          )}
+          {isHumanTurn && turnTimeRemaining !== undefined && (
+            <span
+              className={`font-mono font-black text-[11px] px-2 py-0.5 rounded-full border transition-all ${
+                turnTimeRemaining <= 5
+                  ? 'bg-red-950 text-red-200 border-red-500 animate-pulse'
+                  : 'bg-[var(--theme-bg-surface)] text-[var(--theme-gold)] border-[var(--theme-gold)]/40'
+              }`}
+              title="15s turn countdown"
+            >
+              ⏱️ {turnTimeRemaining}s
             </span>
           )}
         </div>

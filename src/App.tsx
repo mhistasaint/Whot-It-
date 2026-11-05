@@ -331,9 +331,74 @@ export default function App() {
     setGameState(prev => drawCard(prev, 0));
   };
 
-  // Peek feature
-  const isHumanTurn = gameState.currentPlayerIndex === 0;
+  // 15-second countdown timer for the human player's turn that automatically draws a card if time runs out
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number>(15);
+  const isHumanTurn = gameState.status === 'PLAYING' && gameState.currentPlayerIndex === 0 && currentScreen === 'MATCH';
 
+  const isAnyModalOpen =
+    isSettingsOpen ||
+    isHowToPlayOpen ||
+    isStatsOpen ||
+    isDailyRewardOpen ||
+    isGemShopOpen ||
+    isAvatarStudioOpen ||
+    isProfileOpen ||
+    isMultiplayerOpen ||
+    isPeekOpen;
+
+  // Reset and run 15-second countdown on human turn
+  useEffect(() => {
+    if (!isHumanTurn || isAnyModalOpen) {
+      if (!isHumanTurn) {
+        setTurnTimeRemaining(15);
+      }
+      return;
+    }
+
+    // Reset to 15s at start of human turn
+    setTurnTimeRemaining(15);
+
+    const interval = setInterval(() => {
+      setTurnTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        if (prev <= 4) {
+          soundService.playTimerWarning();
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isHumanTurn, gameState.turnCount, isAnyModalOpen]);
+
+  // When countdown hits 0 on human turn: auto-draw from market to enforce game pressure!
+  useEffect(() => {
+    if (isHumanTurn && turnTimeRemaining === 0) {
+      // Clear staged WHOT 20 if user was selecting shape
+      setStagedWhotCardId(null);
+      setSelectedCardId(null);
+      if (gameState.status === 'WAITING_WHOT_SHAPE') {
+        setGameState(prev => cancelWhotShape(prev));
+      }
+
+      // Flash auto-draw warning on the human player
+      setOpponentActionText(prev => ({
+        ...prev,
+        [gameState.players[0].id]: "⏱️ Time's up (15s)! Forced to Market 🛒",
+      }));
+      setTimeout(() => {
+        setOpponentActionText(prev => ({ ...prev, [gameState.players[0].id]: null }));
+      }, 2500);
+
+      soundService.playCardDraw();
+      setGameState(prev => drawCard(prev, 0));
+    }
+  }, [isHumanTurn, turnTimeRemaining]);
+
+  // Peek feature
   const handleOpenPeek = () => {
     setIsPeekOpen(true);
   };
@@ -554,6 +619,7 @@ export default function App() {
                 canHumanDraw={isHumanTurn}
                 onDrawClick={handleHumanDraw}
                 statusMessage={turnBanner}
+                turnTimeRemaining={turnTimeRemaining}
               />
             </div>
 
@@ -570,6 +636,7 @@ export default function App() {
                 onSelectCard={setSelectedCardId}
                 onPlayCard={handleHumanPlayCard}
                 onDrawCard={handleHumanDraw}
+                turnTimeRemaining={turnTimeRemaining}
               />
             </div>
           </div>
@@ -637,11 +704,15 @@ export default function App() {
         onClose={() => setIsMultiplayerOpen(false)}
       />
 
-      {/* Demo Gem Shop Modal */}
+      {/* Demo Gem Shop Modal (Locked with active Daily Gem link) */}
       <GemShopModal
         isOpen={isGemShopOpen}
         onClose={() => setIsGemShopOpen(false)}
         onGemsUpdated={() => setGems(getStoredGems())}
+        onOpenDailyBonus={() => {
+          setIsGemShopOpen(false);
+          setIsDailyRewardOpen(true);
+        }}
       />
 
       {/* How to Play Rules Modal */}
@@ -680,7 +751,8 @@ export default function App() {
         players={gameState.players}
         turnCount={gameState.turnCount}
         onNewMatch={handleStartMatch}
-        onReturnToLobby={() => setCurrentScreen('HOME')}
+        onReturnHome={() => setCurrentScreen('WELCOME')}
+        onReturnToLobby={() => setCurrentScreen('WELCOME')}
       />
     </div>
   );

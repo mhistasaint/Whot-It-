@@ -12,6 +12,7 @@ interface CenterTableProps {
   canHumanDraw: boolean;
   onDrawClick: () => void;
   statusMessage?: string;
+  turnTimeRemaining?: number;
 }
 
 export const CenterTable: React.FC<CenterTableProps> = ({
@@ -24,30 +25,52 @@ export const CenterTable: React.FC<CenterTableProps> = ({
   canHumanDraw,
   onDrawClick,
   statusMessage,
+  turnTimeRemaining,
 }) => {
   const topCard = discardPile[discardPile.length - 1];
   const previousCard = discardPile.length > 1 ? discardPile[discardPile.length - 2] : null;
 
   return (
     <div className="relative flex flex-col items-center justify-center w-full max-w-xl mx-auto py-1 sm:py-2 select-none text-[var(--theme-text-primary)]">
-      {/* Active Shape & Context Bar */}
-      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 bg-[var(--theme-bg-main)]/90 border border-[var(--theme-gold)]/40 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 shadow-md backdrop-blur-sm text-[11px] sm:text-xs">
-        <div className="flex items-center gap-1.5 font-medium text-[var(--theme-text-muted)]">
-          <span>Shape:</span>
-          <span className="font-display font-extrabold text-[var(--theme-gold)] tracking-wider uppercase flex items-center gap-1">
-            <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B91C1C] inline-block bg-[#FDFBF7] p-0.5 rounded">
-              <ShapeIcon shape={activeShape} className="w-full h-full" />
+      {/* Active Shape, Context Bar & 15s Countdown Timer */}
+      <div className="flex items-center flex-wrap justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+        {/* Active Shape & Context Bar */}
+        <div className="flex items-center gap-2 sm:gap-3 bg-[var(--theme-bg-main)]/90 border border-[var(--theme-gold)]/40 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 shadow-md backdrop-blur-sm text-[11px] sm:text-xs">
+          <div className="flex items-center gap-1.5 font-medium text-[var(--theme-text-muted)]">
+            <span>Shape:</span>
+            <span className="font-display font-extrabold text-[var(--theme-gold)] tracking-wider uppercase flex items-center gap-1">
+              <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B91C1C] inline-block bg-[#FDFBF7] p-0.5 rounded">
+                <ShapeIcon shape={activeShape} className="w-full h-full" />
+              </span>
+              {activeShape}
             </span>
-            {activeShape}
-          </span>
+          </div>
+          <span className="text-[var(--theme-gold)]/40">·</span>
+          <div className="font-medium text-[var(--theme-text-muted)]">
+            <span>Match:</span>{' '}
+            <strong className="text-[var(--theme-text-primary)] font-bold">
+              {activeShape} or {activeNumber}
+            </strong>
+          </div>
         </div>
-        <span className="text-[var(--theme-gold)]/40">·</span>
-        <div className="font-medium text-[var(--theme-text-muted)]">
-          <span>Match:</span>{' '}
-          <strong className="text-[var(--theme-text-primary)] font-bold">
-            {activeShape} or {activeNumber}
-          </strong>
-        </div>
+
+        {/* 15s Countdown Timer for Human Player */}
+        {isHumanTurn && turnTimeRemaining !== undefined && (
+          <div
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border transition-all shadow-md ${
+              turnTimeRemaining <= 5
+                ? 'bg-red-950/95 border-red-500 text-red-200 animate-pulse ring-2 ring-red-500/50'
+                : 'bg-[var(--theme-bg-main)]/90 border-[var(--theme-gold)]/60 text-[var(--theme-gold)]'
+            }`}
+            title="15-second human turn countdown. Draws automatically if time runs out!"
+          >
+            <span className="text-xs sm:text-sm">{turnTimeRemaining <= 5 ? '⚠️' : '⏱️'}</span>
+            <span className="font-mono font-black text-xs sm:text-sm tracking-tight">{turnTimeRemaining}s</span>
+            <span className={`text-[10px] uppercase font-extrabold ${turnTimeRemaining <= 5 ? 'text-red-300' : 'text-[var(--theme-text-muted)]'}`}>
+              {turnTimeRemaining <= 5 ? 'Auto-Draw!' : 'Your Turn'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Pending Penalty Alert Banner */}

@@ -5,6 +5,7 @@ interface GemShopModalProps {
   isOpen: boolean;
   onClose: () => void;
   onGemsUpdated: () => void;
+  onOpenDailyBonus?: () => void;
 }
 
 const PACKAGES = [
@@ -35,6 +36,7 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
   isOpen,
   onClose,
   onGemsUpdated,
+  onOpenDailyBonus,
 }) => {
   const [activeTab, setActiveTab] = useState<'packages' | 'history'>('packages');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -42,26 +44,19 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleDemoBuy = (pkg: typeof PACKAGES[0]) => {
-    recordDemoPurchase(pkg.name, pkg.gems, pkg.priceTag);
-    onGemsUpdated();
-    setPurchases(getDemoPurchases());
-    setSuccessMsg(`Simulated demo purchase complete! +${pkg.gems} Gems credited.`);
-    setTimeout(() => {
-      setSuccessMsg(null);
-    }, 3500);
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-6 text-[var(--theme-text-primary)] max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
+      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-6 text-[var(--theme-text-primary)] max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--theme-border)] pb-3 mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">💎</span>
-            <h2 className="font-display font-extrabold text-xl text-[var(--theme-text-primary)]">
+            <h2 className="font-display font-black text-xl text-[var(--theme-text-primary)]">
               Gem Shop
             </h2>
+            <span className="text-[10px] uppercase font-bold text-[var(--theme-gold)] bg-[var(--theme-gold)]/15 border border-[var(--theme-gold)]/30 px-2 py-0.5 rounded-full">
+              Store Locked
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -71,9 +66,44 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
           </button>
         </div>
 
-        {/* DEMO Disclaimer Banner */}
-        <div className="p-3 rounded-xl bg-amber-950/60 border border-[var(--theme-accent)]/40 mb-4 text-xs text-amber-200">
-          <span className="font-bold">⚠️ SIMULATED DEMO SHOP ONLY:</span> No real payment gateway is integrated, and no real money is ever charged or collected. All purchases are instant simulated credits.
+        {/* Locked Store Announcement Banner */}
+        <div className="p-3.5 rounded-2xl bg-amber-950/70 border border-[var(--theme-gold)]/50 mb-4 text-xs text-amber-200">
+          <div className="flex items-start gap-2">
+            <span className="text-base leading-none">🔒</span>
+            <div>
+              <span className="font-bold block text-amber-100">Gem Store Locked:</span>
+              <span>
+                Purchases and extra gem packages are currently locked until the Online Multiplayer launch.
+                However, the <strong className="text-[var(--theme-gold)] font-bold">Daily Gem Collection</strong> is 100% active!
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Daily Gem Collection Card (Active & Promoted) */}
+        <div className="p-3.5 rounded-2xl bg-[var(--theme-bg-main)] border-2 border-[var(--theme-accent)] flex flex-col sm:flex-row items-center justify-between gap-3 mb-4 shadow-md">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🎁</span>
+            <div className="text-left">
+              <h4 className="font-display font-extrabold text-sm text-[var(--theme-text-primary)]">
+                Daily Gem Collection is Active!
+              </h4>
+              <p className="text-[11px] text-[var(--theme-text-muted)]">
+                Claim free gems every 24 hours to grow your streak
+              </p>
+            </div>
+          </div>
+          {onOpenDailyBonus && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenDailyBonus();
+              }}
+              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            >
+              Collect Daily Gems →
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -86,7 +116,7 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
                 : 'bg-[var(--theme-bg-main)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
             }`}
           >
-            Packages
+            Locked Packages
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -96,34 +126,28 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
                 : 'bg-[var(--theme-bg-main)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
             }`}
           >
-            Demo History ({purchases.length})
+            History ({purchases.length})
           </button>
         </div>
-
-        {successMsg && (
-          <div className="mb-4 p-2.5 rounded-lg bg-[var(--theme-bg-elevated)] border border-[var(--theme-accent)] text-[var(--theme-accent)] text-xs font-bold text-center">
-            {successMsg}
-          </div>
-        )}
 
         {activeTab === 'packages' ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {PACKAGES.map(pkg => (
               <div
                 key={pkg.gems}
-                className="relative flex flex-col justify-between p-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-accent)] transition-all"
+                className="relative flex flex-col justify-between p-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] opacity-85 transition-all"
               >
                 {pkg.badge && (
-                  <span className="absolute -top-2 right-3 text-[10px] font-extrabold uppercase tracking-wider bg-[var(--theme-accent)] text-[var(--theme-accent-text)] px-2 py-0.5 rounded-full shadow">
-                    {pkg.badge}
+                  <span className="absolute -top-2 right-3 text-[10px] font-extrabold uppercase tracking-wider bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full shadow">
+                    Locked
                   </span>
                 )}
                 <div className="text-center mb-3">
-                  <span className="text-3xl mb-1 block">{pkg.icon}</span>
+                  <span className="text-3xl mb-1 block opacity-80">{pkg.icon}</span>
                   <h3 className="font-display font-extrabold text-base text-[var(--theme-text-primary)]">
                     {pkg.name}
                   </h3>
-                  <div className="font-display font-black text-2xl text-[var(--theme-accent)] my-1">
+                  <div className="font-display font-black text-2xl text-[var(--theme-text-muted)] my-1">
                     +{pkg.gems}
                   </div>
                   <span className="text-[10px] text-[var(--theme-text-muted)]">Gems</span>
@@ -131,13 +155,14 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
 
                 <div className="pt-2 border-t border-[var(--theme-border)] text-center">
                   <div className="text-[11px] text-[var(--theme-text-muted)] mb-2">
-                    Simulated <span className="line-through">{pkg.priceTag}</span> (DEMO Free)
+                    Unlocks with Multiplayer
                   </div>
                   <button
-                    onClick={() => handleDemoBuy(pkg)}
-                    className="w-full py-2 px-3 rounded-lg bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer"
+                    disabled
+                    className="w-full py-2 px-3 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] text-[var(--theme-text-muted)] text-xs font-bold cursor-not-allowed flex items-center justify-center gap-1.5 opacity-70"
                   >
-                    Claim Free Demo
+                    <span>🔒</span>
+                    <span>Store Locked</span>
                   </button>
                 </div>
               </div>

@@ -10,6 +10,7 @@ interface MatchResultModalProps {
   turnCount: number;
   onNewMatch: () => void;
   onReturnToLobby?: () => void;
+  onReturnHome?: () => void;
 }
 
 export const MatchResultModal: React.FC<MatchResultModalProps> = ({
@@ -19,6 +20,7 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
   turnCount,
   onNewMatch,
   onReturnToLobby,
+  onReturnHome,
 }) => {
   const isHumanWinner = winner?.isHuman ?? false;
 
@@ -97,14 +99,15 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
           </div>
         </div>
 
-        {/* New Match & Return to Lobby Actions */}
+        {/* New Match & Back to Home Actions */}
         <div className="flex flex-col sm:flex-row items-center gap-2">
-          {onReturnToLobby && (
+          {(onReturnHome || onReturnToLobby) && (
             <button
-              onClick={onReturnToLobby}
-              className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer"
+              onClick={onReturnHome || onReturnToLobby}
+              className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
-              Return to Lobby
+              <span>🏠</span>
+              <span>Back to Home</span>
             </button>
           )}
           <button
