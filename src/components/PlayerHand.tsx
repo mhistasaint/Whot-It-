@@ -9,6 +9,7 @@ interface PlayerHandProps {
   activeNumber: number;
   pendingPenalty: PendingPenalty | null;
   isHumanTurn: boolean;
+  hintsEnabled?: boolean;
   onPlayCard: (cardId: string) => void;
   onDrawCard: () => void;
 }
@@ -19,6 +20,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
   activeNumber,
   pendingPenalty,
   isHumanTurn,
+  hintsEnabled = true,
   onPlayCard,
   onDrawCard,
 }) => {
@@ -70,8 +72,10 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
       <div className="w-full flex items-center justify-center overflow-x-auto no-scrollbar py-4 px-2 min-h-[140px] md:min-h-[170px]">
         <div className="flex items-center justify-center -space-x-4 md:-space-x-6 hover:space-x-1 transition-all duration-300">
           {hand.map((card, index) => {
-            const playable = isHumanTurn && isCardPlayable(card, activeShape, activeNumber, pendingPenalty);
-            // Slight fan rotation based on hand position
+            const isLegal = isCardPlayable(card, activeShape, activeNumber, pendingPenalty);
+            const playable = isHumanTurn && isLegal;
+            const showHighlight = hintsEnabled ? playable : false;
+            const showDim = hintsEnabled && isHumanTurn && !isLegal;
             const rotation = (index - (cardCount - 1) / 2) * 2.5;
 
             return (
@@ -86,10 +90,11 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                   card={card}
                   size="md"
                   isPlayable={playable}
+                  isSelected={showHighlight}
                   onClick={() => {
                     if (playable) onPlayCard(card.id);
                   }}
-                  className={!playable && isHumanTurn ? 'opacity-65 filter grayscale-[20%]' : ''}
+                  className={showDim ? 'opacity-65 filter grayscale-[20%]' : ''}
                 />
               </div>
             );

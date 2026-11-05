@@ -1,7 +1,11 @@
+import { GameMode, BotDifficulty, VisualTheme, PlayerAvatar } from '../game/types';
+
 export interface DailyRewardState {
   lastClaimDate: string | null; // Format YYYY-MM-DD
   consecutiveStreak: number;
   canClaimToday: boolean;
+  streakDay: number; // 1 to 7
+  todayRewardAmount: number;
 }
 
 export interface DemoPurchase {
@@ -25,21 +29,39 @@ export interface MatchStats {
   peeksUsed: number;
 }
 
+export const DEFAULT_AVATAR: PlayerAvatar = {
+  skinTone: '#7D4B2A',
+  hairStyle: 'afro',
+  clothPattern: 'ankara_emerald',
+  bgGradient: 'from-emerald-800 to-emerald-950',
+  gender: 'female',
+};
+
 export interface PlayerSettings {
+  musicEnabled: boolean;
   soundEnabled: boolean;
+  hintsEnabled: boolean;
   fastSpeed: boolean;
+  difficulty: BotDifficulty;
+  selectedMode: GameMode;
+  theme: VisualTheme;
   playerName: string;
+  avatar: PlayerAvatar;
 }
 
 const STORAGE_KEYS = {
-  GEMS: 'whot_it_gems_balance_v1',
-  DAILY_REWARD: 'whot_it_daily_reward_v1',
-  PURCHASES: 'whot_it_demo_purchases_v1',
-  STATS: 'whot_it_match_stats_v1',
-  SETTINGS: 'whot_it_settings_v1',
+  GEMS: 'whot_it_gems_balance_v2',
+  DAILY_REWARD: 'whot_it_daily_reward_v2',
+  DAILY_FREE_PEEK: 'whot_it_daily_free_peek_v2',
+  PURCHASES: 'whot_it_demo_purchases_v2',
+  STATS: 'whot_it_match_stats_v2',
+  SETTINGS: 'whot_it_settings_v2',
+  WAITLIST: 'whot_it_multiplayer_waitlist_v2',
 };
 
-function getTodayDateString(): string {
+export const STREAK_REWARDS = [5, 10, 15, 20, 25, 35, 50]; // 7 days
+
+export function getTodayDateString(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -63,7 +85,6 @@ export function getStoredGems(): number {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.GEMS);
     if (raw === null) {
-      // New player starts with 100 gems
       localStorage.setItem(STORAGE_KEYS.GEMS, '100');
       return 100;
     }
@@ -98,11 +119,34 @@ export function addGems(amount: number): number {
 }
 
 /**
- * Daily Reward operations.
- * Grants 5 gems once per local calendar day.
+ * Daily Free Peek: Granted once per local calendar day!
+ */
+export function canUseDailyFreePeek(): boolean {
+  const today = getTodayDateString();
+  try {
+    const lastDate = localStorage.getItem(STORAGE_KEYS.DAILY_FREE_PEEK);
+    return lastDate !== today;
+  } catch {
+    return true;
+  }
+}
+
+export function recordDailyFreePeekUsed(): void {
+  const today = getTodayDateString();
+  try {
+    localStorage.setItem(STORAGE_KEYS.DAILY_FREE_PEEK, today);
+  } catch (e) {
+    console.error('Failed to record free peek', e);
+  }
+}
+
+/**
+ * Daily Reward operations with 7-day progressive reward track.
  */
 export function getDailyRewardState(): DailyRewardState {
   const today = getTodayDateString();
+  const yesterday = getYesterdayDateString();
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.DAILY_REWARD);
     if (!raw) {
@@ -110,6 +154,8 @@ export function getDailyRewardState(): DailyRewardState {
         lastClaimDate: null,
         consecutiveStreak: 0,
         canClaimToday: true,
+        streakDay: 1,
+        todayRewardAmount: STREAK_REWARDS[0],
       };
     }
     const data = JSON.parse(raw);
@@ -117,16 +163,31 @@ export function getDailyRewardState(): DailyRewardState {
     const streak = typeof data.consecutiveStreak === 'number' ? data.consecutiveStreak : 0;
     const canClaimToday = lastClaim !== today;
 
+    let currentDay = 1;
+    if (lastClaim === today) {
+      currentDay = ((streak - 1) % 7) + 1;
+    } else if (lastClaim === yesterday) {
+      currentDay = (streak % 7) + 1;
+    } else {
+      currentDay = 1; // streak reset
+    }
+
+    const todayRewardAmount = STREAK_REWARDS[currentDay - 1] || 5;
+
     return {
       lastClaimDate: lastClaim,
       consecutiveStreak: streak,
       canClaimToday,
+      streakDay: currentDay,
+      todayRewardAmount,
     };
   } catch {
     return {
       lastClaimDate: null,
       consecutiveStreak: 0,
       canClaimToday: true,
+      streakDay: 1,
+      todayRewardAmount: 5,
     };
   }
 }
@@ -147,11 +208,11 @@ export function claimDailyReward(): { success: boolean; newStreak: number; gemsA
 
   let newStreak = 1;
   if (current.lastClaimDate === yesterday) {
-    // Consecutive daily login!
     newStreak = current.consecutiveStreak + 1;
   }
 
-  const gemsAwarded = 5;
+  const streakIdx = ((newStreak - 1) % 7);
+  const gemsAwarded = STREAK_REWARDS[streakIdx] || 5;
   addGems(gemsAwarded);
 
   try {
@@ -170,7 +231,7 @@ export function claimDailyReward(): { success: boolean; newStreak: number; gemsA
     success: true,
     newStreak,
     gemsAwarded,
-    message: `Claimed +${gemsAwarded} gems! Streak: ${newStreak} day${newStreak > 1 ? 's' : ''}!`,
+    message: `Claimed +${gemsAwarded} gems! Day ${streakIdx + 1} streak active.`,
   };
 }
 
@@ -243,9 +304,15 @@ export function updateMatchStats(updater: (prev: MatchStats) => MatchStats): voi
  * Player Settings.
  */
 const DEFAULT_SETTINGS: PlayerSettings = {
+  musicEnabled: false,
   soundEnabled: true,
+  hintsEnabled: true,
   fastSpeed: false,
+  difficulty: 'MEDIUM',
+  selectedMode: '1v3',
+  theme: 'forest',
   playerName: 'You',
+  avatar: DEFAULT_AVATAR,
 };
 
 export function getPlayerSettings(): PlayerSettings {
@@ -267,4 +334,23 @@ export function savePlayerSettings(settings: Partial<PlayerSettings>): PlayerSet
     console.error('Failed to save settings', e);
   }
   return merged;
+}
+
+/**
+ * Multiplayer Waitlist.
+ */
+export function isUserOnWaitlist(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.WAITLIST) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function joinWaitlist(): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.WAITLIST, 'true');
+  } catch (e) {
+    console.error('Failed to save waitlist', e);
+  }
 }

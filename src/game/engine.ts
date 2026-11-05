@@ -5,12 +5,15 @@ import {
   Player,
   PlayerAvatar,
   GameLogEntry,
+  GameMode,
+  BotDifficulty,
+  GameStatus,
 } from './types';
 import { createDeck, shuffleDeck } from './deck';
 import { isCardPlayable, getNextPlayerIndex } from './rules';
 import { BOT_CONFIGS } from './bots';
 
-export const HUMAN_AVATAR: PlayerAvatar = {
+export const HUMAN_DEFAULT_AVATAR: PlayerAvatar = {
   skinTone: '#7D4B2A',
   hairStyle: 'afro',
   clothPattern: 'ankara_emerald',
@@ -28,7 +31,6 @@ function ensureDrawPileCards(drawPile: Card[], discardPile: Card[]): { drawPile:
 
   // Draw pile is empty: keep top discard, shuffle the rest to form new draw pile
   if (discardPile.length <= 1) {
-    // Only top discard exists, no cards can be reshuffled
     return { drawPile: [], discardPile: [...discardPile] };
   }
 
@@ -62,7 +64,6 @@ function drawNCards(
     }
 
     if (currentDraw.length === 0) {
-      // No more cards available anywhere
       break;
     }
 
@@ -78,22 +79,53 @@ function drawNCards(
 }
 
 /**
- * Initializes a new match of WHOT It!
+ * Calculates suspension skip index across any player count (2 to 5 players).
  */
-export function initGame(playerName = 'You'): GameState {
+export function getSuspensionNextIndex(currentIndex: number, isStar: boolean, totalPlayers: number): number {
+  if (totalPlayers === 2) {
+    return currentIndex; // Skips the only opponent, turn returns to current player
+  }
+  if (totalPlayers === 3) {
+    if (isStar) return currentIndex; // Star 8 skips both opponents, turn returns to current player
+    return (currentIndex + 2) % totalPlayers;
+  }
+  const skipCount = isStar ? 3 : 2;
+  return (currentIndex + skipCount) % totalPlayers;
+}
+
+/**
+ * Initializes a match of WHOT It! supporting selectable GameModes (1v1, 1v2, 1v3, 1v4).
+ */
+export function initGame(
+  mode: GameMode = '1v3',
+  difficulty: BotDifficulty = 'MEDIUM',
+  playerName = 'You',
+  playerAvatar: PlayerAvatar = HUMAN_DEFAULT_AVATAR,
+  initialStatus: GameStatus = 'PLAYING'
+): GameState {
   const deck = shuffleDeck(createDeck());
+
+  const botCountMap: Record<GameMode, number> = {
+    '1v1': 1,
+    '1v2': 2,
+    '1v3': 3,
+    '1v4': 4,
+  };
+
+  const botCount = botCountMap[mode] || 3;
+  const activeBots = BOT_CONFIGS.slice(0, botCount);
 
   const players: Player[] = [
     {
       id: 'player_human',
-      name: playerName,
+      name: playerName || 'You',
       isHuman: true,
       hand: [],
-      avatar: HUMAN_AVATAR,
+      avatar: playerAvatar,
       personality: 'Bold tactician & challenger.',
       titles: 'The Contender',
     },
-    ...BOT_CONFIGS.map((bot, index) => ({
+    ...activeBots.map((bot, index) => ({
       id: `player_bot_${index + 1}`,
       name: bot.name,
       isHuman: false,
@@ -104,7 +136,7 @@ export function initGame(playerName = 'You'): GameState {
     })),
   ];
 
-  // Deal 6 cards to each of the 4 players
+  // Deal 6 cards to each player
   let remainingDeck = [...deck];
   for (let round = 0; round < 6; round++) {
     for (const player of players) {
@@ -116,7 +148,6 @@ export function initGame(playerName = 'You'): GameState {
   // Find the first non-WHOT card to start the discard pile
   let initialDiscardIndex = remainingDeck.findIndex(c => c.shape !== 'WHOT');
   if (initialDiscardIndex === -1) {
-    // Edge case safety
     initialDiscardIndex = remainingDeck.length - 1;
   }
   const [initialDiscardCard] = remainingDeck.splice(initialDiscardIndex, 1);
@@ -124,12 +155,14 @@ export function initGame(playerName = 'You'): GameState {
   const initialLog: GameLogEntry = {
     id: `log_${Date.now()}_start`,
     timestamp: Date.now(),
-    text: `Match started! First card is ${initialDiscardCard.shape} ${initialDiscardCard.number}. ${players[0].name} starts.`,
+    text: `Match started (${mode} mode · ${difficulty} difficulty). First card is ${initialDiscardCard.shape} ${initialDiscardCard.number}.`,
     type: 'play',
   };
 
   return {
-    status: 'PLAYING',
+    status: initialStatus,
+    mode,
+    difficulty,
     players,
     currentPlayerIndex: 0, // Human starts
     drawPile: remainingDeck,
@@ -137,7 +170,6 @@ export function initGame(playerName = 'You'): GameState {
     activeShape: initialDiscardCard.shape,
     activeNumber: initialDiscardCard.number,
     pendingPenalty: null,
-    freePeeksRemaining: 1, // 1 free peek per match
     turnCount: 1,
     winner: null,
     lastPlayedCard: initialDiscardCard,
@@ -190,8 +222,6 @@ export function playCard(
   const logs = [...state.log];
 
   // WIN CHECK: If hand is empty, player wins immediately!
-  // "If a player empties their hand by playing a special card, end the match immediately.
-  // Do not execute another effect or extra turn after the player has won."
   if (newHand.length === 0) {
     logs.push({
       id: `log_${Date.now()}_win`,
@@ -219,7 +249,7 @@ export function playCard(
   let drawPile = [...state.drawPile];
   let discardPile = newDiscardPile;
 
-  // Clear any existing penalty that was successfully answered/stacked
+  // Clear or stack existing penalty
   if (state.pendingPenalty) {
     if (state.pendingPenalty.type === 'PICK_TWO' && card.number === 2) {
       newPendingPenalty = {
@@ -249,21 +279,21 @@ export function playCard(
       nextPlayerIndex = getNextPlayerIndex(state.currentPlayerIndex, 1, state.players.length);
     }
   } else {
-    // Normal turn plays without prior active penalty
+    // Normal turn plays
     switch (card.number) {
       case 1: {
-        // CARD 1 — HOLD ON: player immediately takes another turn
+        // HOLD ON: player immediately takes another turn
         logs.push({
           id: `log_${Date.now()}_holdon`,
           timestamp: Date.now(),
           text: `✋ ${player.name} played Hold On (1)! ${player.name} plays again.`,
           type: 'special',
         });
-        nextPlayerIndex = state.currentPlayerIndex; // Continues their turn
+        nextPlayerIndex = state.currentPlayerIndex;
         break;
       }
       case 2: {
-        // CARD 2 — PICK TWO
+        // PICK TWO
         newPendingPenalty = {
           type: 'PICK_TWO',
           amount: 2,
@@ -279,7 +309,7 @@ export function playCard(
         break;
       }
       case 5: {
-        // CARD 5 — PICK THREE
+        // PICK THREE
         newPendingPenalty = {
           type: 'PICK_THREE',
           amount: 3,
@@ -295,39 +325,35 @@ export function playCard(
         break;
       }
       case 8: {
-        // CARD 8 — SUSPENSION:
-        // STAR 8: next two players miss their turns (skips 2 players)
-        // Normal 8: next player misses their turn (skips 1 player)
-        if (card.shape === 'STAR') {
+        // SUSPENSION
+        const isStar = card.shape === 'STAR';
+        if (isStar) {
           logs.push({
             id: `log_${Date.now()}_star8`,
             timestamp: Date.now(),
-            text: `⭐ ${player.name} played Star 8! The next TWO players are suspended!`,
+            text: `⭐ ${player.name} played Star 8! Suspends 2 opponents!`,
             type: 'special',
           });
-          nextPlayerIndex = getNextPlayerIndex(state.currentPlayerIndex, 3, state.players.length);
         } else {
           logs.push({
             id: `log_${Date.now()}_suspension`,
             timestamp: Date.now(),
-            text: `🚫 ${player.name} played Suspension (8)! Next player misses their turn.`,
+            text: `🚫 ${player.name} played Suspension (8)! Next player misses turn.`,
             type: 'special',
           });
-          nextPlayerIndex = getNextPlayerIndex(state.currentPlayerIndex, 2, state.players.length);
         }
+        nextPlayerIndex = getSuspensionNextIndex(state.currentPlayerIndex, isStar, state.players.length);
         break;
       }
       case 14: {
-        // CARD 14 — GENERAL MARKET:
-        // Every other active player draws one card. Player who played 14 takes another turn.
+        // GENERAL MARKET: every other active player draws 1 card, current player continues turn
         logs.push({
           id: `log_${Date.now()}_market`,
           timestamp: Date.now(),
-          text: `🛒 ${player.name} called General Market (14)! Everyone else goes to market (draws 1 card). ${player.name} plays again.`,
+          text: `🛒 ${player.name} called General Market (14)! Everyone else goes to market. ${player.name} plays again.`,
           type: 'special',
         });
 
-        // Give 1 card to every other player
         for (let i = 0; i < updatedPlayers.length; i++) {
           if (i !== playerIndex) {
             const drawRes = drawNCards(1, drawPile, discardPile);
@@ -341,11 +367,11 @@ export function playCard(
             }
           }
         }
-        nextPlayerIndex = state.currentPlayerIndex; // Takes another turn
+        nextPlayerIndex = state.currentPlayerIndex;
         break;
       }
       case 20: {
-        // CARD 20 — WHOT wild card
+        // WHOT Wild card
         const selectedShape = chosenWhotShape || 'CIRCLE';
         nextActiveShape = selectedShape;
         logs.push({
@@ -358,7 +384,7 @@ export function playCard(
         break;
       }
       default: {
-        // Normal card (3, 4, 7, 10, 11, 12, 13)
+        // Normal card
         logs.push({
           id: `log_${Date.now()}_normal`,
           timestamp: Date.now(),
@@ -397,7 +423,6 @@ export function resolveWhotShape(state: GameState, chosenShape: CardShape): Game
   const playerIndex = state.pendingWhotPlayerIndex;
   const player = state.players[playerIndex];
 
-  // Find the WHOT card in player hand
   const whotCard = player.hand.find(c => c.number === 20);
   if (!whotCard) return { ...state, status: 'PLAYING', pendingWhotPlayerIndex: null };
 
@@ -411,8 +436,6 @@ export function resolveWhotShape(state: GameState, chosenShape: CardShape): Game
 
 /**
  * Handles drawing card(s) on a player's turn.
- * If penalty is active, draws penalty amount and clears penalty.
- * If normal draw, draws 1 card and ends turn without playing drawn card.
  */
 export function drawCard(state: GameState, playerIndex: number): GameState {
   if (state.status === 'GAME_OVER') return state;
@@ -446,7 +469,6 @@ export function drawCard(state: GameState, playerIndex: number): GameState {
     type: state.pendingPenalty ? 'penalty' : 'draw',
   });
 
-  // End turn: "Do not allow the player to immediately play the card they just drew."
   const nextPlayerIndex = getNextPlayerIndex(state.currentPlayerIndex, 1, state.players.length);
 
   return {
@@ -454,7 +476,7 @@ export function drawCard(state: GameState, playerIndex: number): GameState {
     players: updatedPlayers,
     drawPile: newDrawPile,
     discardPile: newDiscardPile,
-    pendingPenalty: null, // Penalty has been absorbed
+    pendingPenalty: null,
     currentPlayerIndex: nextPlayerIndex,
     turnCount: state.turnCount + 1,
     log: logs,

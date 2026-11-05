@@ -5,7 +5,7 @@ import { AvatarView } from './AvatarView';
 interface OpponentSeatProps {
   player: Player;
   isCurrentTurn: boolean;
-  position: 'left' | 'top' | 'right';
+  position?: 'left' | 'top' | 'right' | 'topLeft' | 'topRight' | 'center';
   lastActionText?: string | null;
 }
 

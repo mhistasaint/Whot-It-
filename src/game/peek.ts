@@ -31,7 +31,8 @@ export function peekNextBotMove(state: GameState): PeekResult {
     state.activeShape,
     state.activeNumber,
     state.pendingPenalty,
-    handSizes
+    handSizes,
+    state.difficulty
   );
 
   if (decision.type === 'DRAW') {

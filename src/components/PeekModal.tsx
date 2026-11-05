@@ -5,10 +5,10 @@ import { CardView } from './CardView';
 interface PeekModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isFreePeek: boolean;
+  isDailyFreePeek: boolean;
   gemBalance: number;
   onConfirmPaidPeek: () => boolean; // returns true if deducted
-  onUseFreePeek?: () => void;
+  onUseDailyFreePeek?: () => void;
   onOpenGemShop: () => void;
   peekResult: PeekResult | null;
 }
@@ -16,10 +16,10 @@ interface PeekModalProps {
 export const PeekModal: React.FC<PeekModalProps> = ({
   isOpen,
   onClose,
-  isFreePeek,
+  isDailyFreePeek,
   gemBalance,
   onConfirmPaidPeek,
-  onUseFreePeek,
+  onUseDailyFreePeek,
   onOpenGemShop,
   peekResult,
 }) => {
@@ -34,9 +34,9 @@ export const PeekModal: React.FC<PeekModalProps> = ({
   const handleConfirm = () => {
     if (isProcessing) return;
 
-    if (isFreePeek) {
+    if (isDailyFreePeek) {
       setIsProcessing(true);
-      onUseFreePeek?.();
+      onUseDailyFreePeek?.();
       setRevealed(true);
       setIsProcessing(false);
     } else {
@@ -57,8 +57,8 @@ export const PeekModal: React.FC<PeekModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-md bg-[#123D2B] border border-[#D7B45A] rounded-2xl shadow-2xl p-6 text-[#F7F3E8]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
+      <div className="w-full max-w-md bg-[#123D2B] border-2 border-[#D7B45A] rounded-2xl shadow-2xl p-5 sm:p-6 text-[#F7F3E8]">
         {!revealed ? (
           /* Confirmation Screen */
           <div className="flex flex-col items-center text-center">
@@ -73,21 +73,21 @@ export const PeekModal: React.FC<PeekModalProps> = ({
               Peek Next Card
             </h2>
             <p className="text-xs text-[#F7F3E8]/80 mb-4 max-w-sm">
-              Discover the exact card the upcoming computer opponent intends to play on their next turn!
+              Discover the exact card the upcoming computer opponent intends to play on their turn!
             </p>
 
             {/* Pricing details */}
             <div className="w-full p-4 rounded-xl bg-[#08291F] border border-[#176B45] mb-5 text-left text-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[#F7F3E8]/70">Peek Status:</span>
+                <span className="text-[#F7F3E8]/70">Reward Status:</span>
                 <span className="font-bold text-[#D7B45A]">
-                  {isFreePeek ? 'FREE (1st peek of match)' : 'PAID PEEK'}
+                  {isDailyFreePeek ? 'FREE Daily Peek (Once per calendar day)' : 'Paid Peek (Daily free peek used)'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[#F7F3E8]/70">Cost:</span>
+                <span className="text-[#F7F3E8]/70">Peek Cost:</span>
                 <span className="font-display font-extrabold text-sm text-[#F7F3E8]">
-                  {isFreePeek ? '0 Gems' : '100 Gems'}
+                  {isDailyFreePeek ? '0 Gems (Free Today)' : '100 Gems'}
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-[#176B45]">
@@ -96,7 +96,7 @@ export const PeekModal: React.FC<PeekModalProps> = ({
               </div>
             </div>
 
-            {!isFreePeek && !hasEnoughGems && (
+            {!isDailyFreePeek && !hasEnoughGems && (
               <div className="w-full p-3 mb-4 rounded-lg bg-red-950/60 border border-red-500/40 text-red-200 text-xs">
                 You need 100 gems to peek, but only have {gemBalance} gems.
               </div>
@@ -106,18 +106,18 @@ export const PeekModal: React.FC<PeekModalProps> = ({
             <div className="flex items-center gap-3 w-full">
               <button
                 onClick={handleModalClose}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-[#08291F] border border-[#176B45] text-xs font-semibold text-[#F7F3E8]/80 hover:bg-[#176B45] transition-all"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#08291F] border border-[#176B45] text-xs font-semibold text-[#F7F3E8]/80 hover:bg-[#176B45] transition-all"
               >
                 Cancel
               </button>
 
-              {!isFreePeek && !hasEnoughGems ? (
+              {!isDailyFreePeek && !hasEnoughGems ? (
                 <button
                   onClick={() => {
                     handleModalClose();
                     onOpenGemShop();
                   }}
-                  className="flex-1 py-2.5 px-4 rounded-lg bg-[#D7B45A] hover:bg-[#c2a24c] text-[#08291F] text-xs font-bold shadow-md transition-all active:scale-95"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#D7B45A] hover:bg-[#c2a24c] text-[#08291F] text-xs font-bold shadow-md transition-all active:scale-95"
                 >
                   Get Gems (Shop)
                 </button>
@@ -125,9 +125,9 @@ export const PeekModal: React.FC<PeekModalProps> = ({
                 <button
                   disabled={isProcessing}
                   onClick={handleConfirm}
-                  className="flex-1 py-2.5 px-4 rounded-lg bg-[#D7B45A] hover:bg-[#c2a24c] text-[#08291F] text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#D7B45A] hover:bg-[#c2a24c] text-[#08291F] text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
                 >
-                  {isFreePeek ? 'Use Free Peek' : 'Confirm & Peek (100 💎)'}
+                  {isDailyFreePeek ? 'Use Daily Free Peek' : 'Confirm & Peek (100 💎)'}
                 </button>
               )}
             </div>
@@ -175,7 +175,7 @@ export const PeekModal: React.FC<PeekModalProps> = ({
 
             <button
               onClick={handleModalClose}
-              className="w-full py-2.5 px-4 rounded-lg bg-[#176B45] hover:bg-[#123D2B] text-[#F7F3E8] border border-[#7CCB75]/40 text-xs font-bold transition-all active:scale-95 shadow-md"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#176B45] hover:bg-[#123D2B] text-[#F7F3E8] border border-[#7CCB75]/40 text-xs font-bold transition-all active:scale-95 shadow-md"
             >
               Back to Match
             </button>

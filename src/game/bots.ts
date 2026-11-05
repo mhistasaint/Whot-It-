@@ -1,7 +1,7 @@
-import { Card, CardShape, PendingPenalty, Player, BotDecision, PlayerAvatar } from './types';
+import { Card, CardShape, PendingPenalty, BotDecision, PlayerAvatar, BotDifficulty } from './types';
 import { getPlayableCards } from './rules';
 
-// Profile specifications for Nigerian computer opponents
+// Profile specifications for contemporary Nigerian computer opponents
 export const BOT_CONFIGS: Array<{
   name: string;
   personality: string;
@@ -44,6 +44,18 @@ export const BOT_CONFIGS: Array<{
       gender: 'male',
     },
   },
+  {
+    name: 'Ngozi',
+    titles: 'The Grandmaster',
+    personality: 'Sharp-eyed card counter. Calculates hands and dictates the table flow.',
+    avatar: {
+      skinTone: '#54311C',
+      hairStyle: 'dreads',
+      clothPattern: 'white_agbada',
+      bgGradient: 'from-emerald-900 to-slate-950',
+      gender: 'female',
+    },
+  },
 ];
 
 /**
@@ -75,20 +87,21 @@ export function getBestWhotShape(remainingHand: Card[]): CardShape {
     }
   }
 
-  // If hand has no other cards or all equal 0, default to Circle
   return bestShape;
 }
 
 /**
  * PURE DECISION FUNCTION for bot gameplay.
  * MUST be identical for live bot play and for Peek Next Card predictions.
+ * Accounts for BotDifficulty: EASY, MEDIUM, HARD.
  */
 export function selectBotMove(
   hand: Card[],
   activeShape: CardShape,
   activeNumber: number,
   pendingPenalty: PendingPenalty | null,
-  otherPlayersHandSizes: number[] = []
+  otherPlayersHandSizes: number[] = [],
+  difficulty: BotDifficulty = 'MEDIUM'
 ): BotDecision {
   const playableCards = getPlayableCards(hand, activeShape, activeNumber, pendingPenalty);
 
@@ -102,9 +115,37 @@ export function selectBotMove(
     };
   }
 
-  // If responding to penalty (Pick 2 or Pick 3)
+  // --- EASY DIFFICULTY ---
+  if (difficulty === 'EASY') {
+    // Under penalty, 30% chance to voluntarily take penalty even if defense exists
+    if (pendingPenalty && Math.random() < 0.3) {
+      return {
+        type: 'DRAW',
+        reason: `Missed defense opportunity, draws ${pendingPenalty.amount} cards.`,
+      };
+    }
+
+    // Pick first or random legal card
+    const card = playableCards[Math.floor(Math.random() * playableCards.length)];
+    let chosenWhotShape: CardShape | undefined = undefined;
+    if (card.number === 20) {
+      const shapes: CardShape[] = ['CIRCLE', 'TRIANGLE', 'CROSS', 'SQUARE', 'STAR'];
+      chosenWhotShape = shapes[Math.floor(Math.random() * shapes.length)];
+    }
+
+    return {
+      type: 'PLAY',
+      card,
+      chosenWhotShape,
+      reason: card.number === 20
+        ? `Plays WHOT 20 and calls ${chosenWhotShape}!`
+        : `Plays ${card.shape} ${card.number}.`,
+    };
+  }
+
+  // If responding to penalty (Pick 2 or Pick 3) in MEDIUM & HARD
   if (pendingPenalty) {
-    // Play any matching penalty card to pass the penalty onward
+    // Always play matching penalty card to pass the penalty onward
     const penaltyCard = playableCards[0];
     return {
       type: 'PLAY',
@@ -125,44 +166,57 @@ export function selectBotMove(
 
     // 1. Finishing move: if this card empties the hand, maximum priority!
     if (hand.length === 1) {
-      score += 1000;
+      score += 2000;
     }
 
-    // 2. Special cards under threat: use aggressive cards to stall the opponent
-    if (isThreatPresent) {
-      if (card.number === 2 || card.number === 5) score += 80;
-      if (card.number === 8) score += 75; // Suspension
-      if (card.number === 14) score += 70; // General Market
-      if (card.number === 1) score += 65; // Hold on to continue
+    // --- HARD DIFFICULTY ENHANCEMENTS ---
+    if (difficulty === 'HARD') {
+      if (isThreatPresent) {
+        // Punish opponents close to winning
+        if (card.number === 2 || card.number === 5) score += 150;
+        if (card.number === 8) score += 140; // Suspension
+        if (card.number === 14) score += 130; // General Market
+        if (card.number === 1) score += 120; // Hold on to deny turn
+      } else {
+        // Save WHOT 20 for endgame unless it enables finishing
+        if (card.number === 20) {
+          score -= 40;
+        }
+        // Save Pick 2 and Pick 3 for counters
+        if (card.number === 2 || card.number === 5) {
+          score += 35;
+        }
+        if (card.number === 1) {
+          score += 45; // Hold On tempo
+        }
+        if (card.number === 14) {
+          score += 50; // Market gives card advantage
+        }
+      }
+
+      // Card count synergy: favor playing cards of shapes bot dominates
+      const sameShapeCount = hand.filter(c => c.shape === card.shape && c.id !== card.id).length;
+      score += sameShapeCount * 10;
+      score += card.number;
     } else {
-      // Normal game flow: prefer saving wild WHOT 20 cards for emergencies
-      if (card.number === 20) {
-        score -= 20;
+      // --- MEDIUM DIFFICULTY ---
+      if (isThreatPresent) {
+        if (card.number === 2 || card.number === 5) score += 80;
+        if (card.number === 8) score += 75;
+        if (card.number === 14) score += 70;
+        if (card.number === 1) score += 65;
+      } else {
+        if (card.number === 20) score -= 20;
+        if (card.number === 1) score += 30;
+        if (card.number === 2 || card.number === 5) score += 25;
+        if (card.number === 14) score += 35;
+        if (card.number === 8) score += 20;
       }
-      // Hold on is great for keeping momentum
-      if (card.number === 1) {
-        score += 30;
-      }
-      // Pick 2 & Pick 3 are strong pressure
-      if (card.number === 2 || card.number === 5) {
-        score += 25;
-      }
-      // General Market gives an extra turn + cards to opponents
-      if (card.number === 14) {
-        score += 35;
-      }
-      // Suspension is a nice tempo play
-      if (card.number === 8) {
-        score += 20;
-      }
+
+      const sameShapeCount = hand.filter(c => c.shape === card.shape && c.id !== card.id).length;
+      score += sameShapeCount * 5;
+      score += (card.number / 2);
     }
-
-    // Prefer playing shapes that the bot has more of in hand
-    const sameShapeCount = hand.filter(c => c.shape === card.shape && c.id !== card.id).length;
-    score += sameShapeCount * 5;
-
-    // Higher numbers carry more value in some card scoring variants, slightly prefer shedding large numbers
-    score += (card.number / 2);
 
     if (score > highestScore) {
       highestScore = score;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CardShape, GameState } from './game/types';
+import { CardShape, GameState, GameMode, BotDifficulty, PlayerAvatar } from './game/types';
 import { initGame, playCard, drawCard, resolveWhotShape } from './game/engine';
 import { selectBotMove } from './game/bots';
 import { peekNextBotMove } from './game/peek';
@@ -11,8 +11,11 @@ import {
   updateMatchStats,
   getPlayerSettings,
   savePlayerSettings,
+  canUseDailyFreePeek,
+  recordDailyFreePeekUsed,
   DailyRewardState,
   MatchStats,
+  PlayerSettings,
 } from './services/storage';
 import { soundService } from './services/sound';
 
@@ -29,49 +32,93 @@ import { HowToPlayModal } from './components/HowToPlayModal';
 import { StatsModal } from './components/StatsModal';
 import { MatchResultModal } from './components/MatchResultModal';
 import { GameLogView } from './components/GameLogView';
+import { WelcomeLobby } from './components/WelcomeLobby';
+import { AvatarCustomizerModal } from './components/AvatarCustomizerModal';
+import { SettingsModal } from './components/SettingsModal';
+import { MultiplayerModal } from './components/MultiplayerModal';
 
 export default function App() {
-  // Game & Persistence States
-  const [gameState, setGameState] = useState<GameState>(() => initGame('You'));
+  // Settings & Persistent State
+  const [settings, setSettings] = useState<PlayerSettings>(() => getPlayerSettings());
   const [gems, setGems] = useState<number>(() => getStoredGems());
   const [rewardState, setRewardState] = useState<DailyRewardState>(() => getDailyRewardState());
   const [stats, setStats] = useState<MatchStats>(() => getMatchStats());
-  const [settings, setSettings] = useState(() => getPlayerSettings());
+  const [isDailyFreePeekReady, setIsDailyFreePeekReady] = useState<boolean>(() => canUseDailyFreePeek());
 
-  // Modal Dialog States
+  // Game Engine State (starts at LOBBY by default)
+  const [gameState, setGameState] = useState<GameState>(() =>
+    initGame(
+      settings.selectedMode,
+      settings.difficulty,
+      settings.playerName,
+      settings.avatar,
+      'LOBBY'
+    )
+  );
+
+  // Modals
+  const [isLobbyOpen, setIsLobbyOpen] = useState(true);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isDailyRewardOpen, setIsDailyRewardOpen] = useState(false);
   const [isGemShopOpen, setIsGemShopOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
+  const [isMultiplayerOpen, setIsMultiplayerOpen] = useState(false);
   const [isPeekOpen, setIsPeekOpen] = useState(false);
 
-  // Active status cues
+  // Bot activity indicators
   const [opponentActionText, setOpponentActionText] = useState<{ [playerId: string]: string | null }>({});
   const botTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sound sync
+  // Audio synchronization
   useEffect(() => {
-    soundService.setEnabled(settings.soundEnabled);
-  }, [settings.soundEnabled]);
+    soundService.setSoundEnabled(settings.soundEnabled);
+    soundService.setMusicEnabled(settings.musicEnabled);
+  }, [settings.soundEnabled, settings.musicEnabled]);
 
-  const toggleSound = () => {
-    const updated = !settings.soundEnabled;
-    const newSettings = savePlayerSettings({ soundEnabled: updated });
-    setSettings(newSettings);
-    soundService.setEnabled(updated);
+  const handleUpdateSettings = (newSettings: Partial<PlayerSettings>) => {
+    const updated = savePlayerSettings(newSettings);
+    setSettings(updated);
   };
 
-  // Helper to start a fresh match
-  const handleNewMatch = useCallback(() => {
+  const handleToggleSound = () => {
+    handleUpdateSettings({ soundEnabled: !settings.soundEnabled });
+  };
+
+  const handleToggleMusic = () => {
+    handleUpdateSettings({ musicEnabled: !settings.musicEnabled });
+  };
+
+  const handleSaveAvatar = (newAvatar: PlayerAvatar, newName: string) => {
+    handleUpdateSettings({ avatar: newAvatar, playerName: newName });
+    // Update active human player in current game state as well
+    setGameState(prev => ({
+      ...prev,
+      players: prev.players.map(p =>
+        p.isHuman ? { ...p, name: newName, avatar: newAvatar } : p
+      ),
+    }));
+  };
+
+  // Start new match
+  const handleStartMatch = useCallback(() => {
     if (botTimeoutRef.current) {
       clearTimeout(botTimeoutRef.current);
       botTimeoutRef.current = null;
     }
-    const fresh = initGame('You');
+    const fresh = initGame(
+      settings.selectedMode,
+      settings.difficulty,
+      settings.playerName,
+      settings.avatar,
+      'PLAYING'
+    );
     setGameState(fresh);
+    setIsLobbyOpen(false);
     setOpponentActionText({});
     soundService.playCardPlay();
-  }, []);
+  }, [settings.selectedMode, settings.difficulty, settings.playerName, settings.avatar]);
 
   // Handle match conclusion statistics
   useEffect(() => {
@@ -92,32 +139,30 @@ export default function App() {
 
   // Automated Bot Turn Executor
   useEffect(() => {
-    if (gameState.status !== 'PLAYING') return;
+    if (gameState.status !== 'PLAYING' || isLobbyOpen) return;
 
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     if (currentPlayer.isHuman) return;
 
-    // It is a bot's turn!
     const botIndex = gameState.currentPlayerIndex;
     const delay = settings.fastSpeed ? 400 : 800;
 
     botTimeoutRef.current = setTimeout(() => {
-      // Gather other players' remaining hand count for strategy
       const handCounts = gameState.players.map((p, idx) => (idx === botIndex ? 0 : p.hand.length));
 
-      // Use the canonical bot decision engine
+      // Uses canonical bot decision engine with active difficulty
       const decision = selectBotMove(
         currentPlayer.hand,
         gameState.activeShape,
         gameState.activeNumber,
         gameState.pendingPenalty,
-        handCounts
+        handCounts,
+        gameState.difficulty
       );
 
       if (decision.type === 'PLAY' && decision.card) {
         const playedCard = decision.card;
 
-        // Set speech bubble reaction
         let bubble = `Played ${playedCard.shape} ${playedCard.number}`;
         if (playedCard.number === 1) bubble = 'Hold On! ✋';
         else if (playedCard.number === 2) bubble = 'Pick Two! 💥';
@@ -131,7 +176,6 @@ export default function App() {
           setOpponentActionText(prev => ({ ...prev, [currentPlayer.id]: null }));
         }, 2200);
 
-        // Sound effect
         if (playedCard.isSpecial && playedCard.specialType) {
           soundService.playSpecialCard(playedCard.specialType);
         } else {
@@ -140,7 +184,6 @@ export default function App() {
 
         setGameState(prev => playCard(prev, botIndex, playedCard.id, decision.chosenWhotShape));
       } else {
-        // Bot draws from market
         setOpponentActionText(prev => ({
           ...prev,
           [currentPlayer.id]: gameState.pendingPenalty ? `Drew ${gameState.pendingPenalty.amount} cards ⚠️` : 'Went to Market 🛒',
@@ -166,10 +209,12 @@ export default function App() {
     gameState.activeNumber,
     gameState.pendingPenalty,
     gameState.players,
+    gameState.difficulty,
+    isLobbyOpen,
     settings.fastSpeed,
   ]);
 
-  // Human card play action
+  // Human player actions
   const handleHumanPlayCard = (cardId: string) => {
     if (gameState.currentPlayerIndex !== 0) return;
 
@@ -177,7 +222,6 @@ export default function App() {
     const card = humanPlayer.hand.find(c => c.id === cardId);
     if (!card) return;
 
-    // Track statistics
     updateMatchStats(prev => ({
       ...prev,
       cardsPlayed: prev.cardsPlayed + 1,
@@ -191,7 +235,6 @@ export default function App() {
     setStats(getMatchStats());
 
     if (card.number === 20) {
-      // Pause for WHOT shape selection modal
       soundService.playSpecialCard('WHOT');
       setGameState(prev => playCard(prev, 0, cardId));
     } else {
@@ -204,22 +247,19 @@ export default function App() {
     }
   };
 
-  // Human resolves WHOT shape selection
   const handleSelectWhotShape = (shape: CardShape) => {
     soundService.playCardPlay();
     setGameState(prev => resolveWhotShape(prev, shape));
   };
 
-  // Human draws from market
   const handleHumanDraw = () => {
     if (gameState.currentPlayerIndex !== 0) return;
     soundService.playCardDraw();
     setGameState(prev => drawCard(prev, 0));
   };
 
-  // Signature Peek Next Card feature
+  // Peek feature
   const isHumanTurn = gameState.currentPlayerIndex === 0;
-  const isFreePeek = gameState.freePeeksRemaining > 0;
 
   const handleOpenPeek = () => {
     setIsPeekOpen(true);
@@ -238,25 +278,19 @@ export default function App() {
     return false;
   };
 
-  // When free peek is used, decrement freePeeksRemaining on the game state
-  const handleFreePeekUsed = () => {
-    if (gameState.freePeeksRemaining > 0) {
-      setGameState(prev => ({ ...prev, freePeeksRemaining: 0 }));
-      soundService.playPeek();
-      updateMatchStats(prev => ({ ...prev, peeksUsed: prev.peeksUsed + 1 }));
-      setStats(getMatchStats());
-    }
+  const handleUseDailyFreePeek = () => {
+    recordDailyFreePeekUsed();
+    setIsDailyFreePeekReady(false);
+    soundService.playPeek();
+    updateMatchStats(prev => ({ ...prev, peeksUsed: prev.peeksUsed + 1 }));
+    setStats(getMatchStats());
   };
 
-  // Get peek prediction using the pure read-only engine function
   const peekPrediction = isPeekOpen ? peekNextBotMove(gameState) : null;
 
-  // Active turn indicators
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  // Active status cues
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex] || gameState.players[0];
   const humanPlayer = gameState.players[0];
-  const botLeft = gameState.players[1];
-  const botTop = gameState.players[2];
-  const botRight = gameState.players[3];
 
   let turnBanner = '';
   if (gameState.status === 'GAME_OVER') {
@@ -269,95 +303,202 @@ export default function App() {
     turnBanner = `${currentPlayer.name} is making their move...`;
   }
 
+  // Theme felt CSS class
+  const themeFeltClass = {
+    forest: 'felt-table-forest',
+    mahogany: 'felt-table-mahogany',
+    indigo: 'felt-table-indigo',
+    sunset: 'felt-table-sunset',
+  }[settings.theme] || 'felt-table-forest';
+
+  // Opponents list (all non-human players)
+  const opponents = gameState.players.filter(p => !p.isHuman);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#08291F] text-[#F7F3E8] overflow-x-hidden">
-      {/* Universal Top Bar */}
+      {/* Top Bar Navigation */}
       <Navbar
         gems={gems}
         soundEnabled={settings.soundEnabled}
-        onToggleSound={toggleSound}
+        musicEnabled={settings.musicEnabled}
+        onToggleSound={handleToggleSound}
+        onToggleMusic={handleToggleMusic}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
         onOpenStats={() => setIsStatsOpen(true)}
         onOpenDailyReward={() => setIsDailyRewardOpen(true)}
         onOpenGemShop={() => setIsGemShopOpen(true)}
-        onNewMatch={handleNewMatch}
-        freePeeksRemaining={gameState.freePeeksRemaining}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenLobby={() => setIsLobbyOpen(true)}
+        onNewMatch={handleStartMatch}
+        isDailyFreePeek={isDailyFreePeekReady}
         onTriggerPeek={handleOpenPeek}
         canPeek={gameState.status === 'PLAYING'}
+        isInGame={!isLobbyOpen}
       />
 
-      {/* Main Game Arena */}
-      <main className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-2 sm:p-4">
-        {/* Felt Card Table Canvas */}
-        <div className="felt-table relative w-full rounded-3xl border-4 border-[#123D2B] shadow-2xl p-3 sm:p-6 flex flex-col justify-between min-h-[580px] md:min-h-[640px]">
-          
-          {/* Top Opponent (Amina) */}
-          <div className="w-full flex justify-center pt-1">
-            <OpponentSeat
-              player={botTop}
-              isCurrentTurn={gameState.currentPlayerIndex === 2}
-              position="top"
-              lastActionText={opponentActionText[botTop.id]}
-            />
-          </div>
+      {/* Main Content: Either Welcome Lobby OR Live Game Table */}
+      {isLobbyOpen ? (
+        <WelcomeLobby
+          playerName={settings.playerName}
+          avatar={settings.avatar}
+          gems={gems}
+          canClaimDailyReward={rewardState.canClaimToday}
+          canUseFreePeek={isDailyFreePeekReady}
+          selectedMode={settings.selectedMode}
+          selectedDifficulty={settings.difficulty}
+          onSelectMode={mode => handleUpdateSettings({ selectedMode: mode })}
+          onSelectDifficulty={diff => handleUpdateSettings({ difficulty: diff })}
+          onPlayGame={handleStartMatch}
+          onOpenAvatarStudio={() => setIsAvatarStudioOpen(true)}
+          onOpenDailyBonus={() => setIsDailyRewardOpen(true)}
+          onOpenGemShop={() => setIsGemShopOpen(true)}
+          onOpenStats={() => setIsStatsOpen(true)}
+          onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenMultiplayer={() => setIsMultiplayerOpen(true)}
+        />
+      ) : (
+        <main className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-2 sm:p-4 animate-fade-in">
+          {/* Felt Card Table Canvas with Dynamic Theme */}
+          <div className={`${themeFeltClass} relative w-full rounded-3xl border-4 border-[#123D2B] shadow-2xl p-2 sm:p-5 flex flex-col justify-between min-h-[580px] md:min-h-[640px]`}>
+            
+            {/* Top Row Opponents: Layout dynamically adjusts based on active player count */}
+            <div className="w-full">
+              {opponents.length === 1 && (
+                /* 1v1: Single bot centered at top */
+                <div className="flex justify-center pt-1">
+                  <OpponentSeat
+                    player={opponents[0]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 1}
+                    position="top"
+                    lastActionText={opponentActionText[opponents[0].id]}
+                  />
+                </div>
+              )}
 
-          {/* Middle Row: Left Opponent (Chidi) + Center Battle Arena + Right Opponent (Femi) */}
-          <div className="flex items-center justify-between w-full my-auto px-1 sm:px-4 gap-2">
-            {/* Left Opponent (Chidi) */}
-            <div className="shrink-0">
-              <OpponentSeat
-                player={botLeft}
-                isCurrentTurn={gameState.currentPlayerIndex === 1}
-                position="left"
-                lastActionText={opponentActionText[botLeft.id]}
-              />
+              {opponents.length === 2 && (
+                /* 1v2: Two bots spaced nicely at top */
+                <div className="flex justify-around items-center pt-1 px-4">
+                  <OpponentSeat
+                    player={opponents[0]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 1}
+                    position="topLeft"
+                    lastActionText={opponentActionText[opponents[0].id]}
+                  />
+                  <OpponentSeat
+                    player={opponents[1]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 2}
+                    position="topRight"
+                    lastActionText={opponentActionText[opponents[1].id]}
+                  />
+                </div>
+              )}
+
+              {opponents.length === 3 && (
+                /* 1v3: Middle bot at top */
+                <div className="flex justify-center pt-1">
+                  <OpponentSeat
+                    player={opponents[1]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 2}
+                    position="top"
+                    lastActionText={opponentActionText[opponents[1].id]}
+                  />
+                </div>
+              )}
+
+              {opponents.length === 4 && (
+                /* 1v4: Two bots at top center */
+                <div className="flex justify-center gap-8 sm:gap-16 pt-1">
+                  <OpponentSeat
+                    player={opponents[1]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 2}
+                    position="topLeft"
+                    lastActionText={opponentActionText[opponents[1].id]}
+                  />
+                  <OpponentSeat
+                    player={opponents[2]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 3}
+                    position="topRight"
+                    lastActionText={opponentActionText[opponents[2].id]}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Central Play Arena: Market Draw Pile & Discard Pile */}
-            <div className="flex-1 flex justify-center">
-              <CenterTable
-                drawPileCount={gameState.drawPile.length}
-                discardPile={gameState.discardPile}
+            {/* Middle Row: Left Opponent(s) + Center Table Play Arena + Right Opponent(s) */}
+            <div className="flex items-center justify-between w-full my-auto px-1 sm:px-4 gap-2">
+              {/* Left Opponent */}
+              <div className="shrink-0 min-w-[70px]">
+                {opponents.length >= 3 ? (
+                  <OpponentSeat
+                    player={opponents[0]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 1}
+                    position="left"
+                    lastActionText={opponentActionText[opponents[0].id]}
+                  />
+                ) : (
+                  <div className="w-16" />
+                )}
+              </div>
+
+              {/* Central Play Arena: Market Draw Pile & Discard Pile */}
+              <div className="flex-1 flex justify-center">
+                <CenterTable
+                  drawPileCount={gameState.drawPile.length}
+                  discardPile={gameState.discardPile}
+                  activeShape={gameState.activeShape}
+                  activeNumber={gameState.activeNumber}
+                  pendingPenalty={gameState.pendingPenalty}
+                  isHumanTurn={isHumanTurn}
+                  canHumanDraw={isHumanTurn}
+                  onDrawClick={handleHumanDraw}
+                  statusMessage={turnBanner}
+                />
+              </div>
+
+              {/* Right Opponent */}
+              <div className="shrink-0 min-w-[70px]">
+                {opponents.length === 3 ? (
+                  <OpponentSeat
+                    player={opponents[2]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 3}
+                    position="right"
+                    lastActionText={opponentActionText[opponents[2].id]}
+                  />
+                ) : opponents.length === 4 ? (
+                  <OpponentSeat
+                    player={opponents[3]}
+                    isCurrentTurn={gameState.currentPlayerIndex === 4}
+                    position="right"
+                    lastActionText={opponentActionText[opponents[3].id]}
+                  />
+                ) : (
+                  <div className="w-16" />
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Row: Human Player's Hand */}
+            <div className="w-full pt-1">
+              <PlayerHand
+                hand={humanPlayer.hand}
                 activeShape={gameState.activeShape}
                 activeNumber={gameState.activeNumber}
                 pendingPenalty={gameState.pendingPenalty}
                 isHumanTurn={isHumanTurn}
-                canHumanDraw={isHumanTurn}
-                onDrawClick={handleHumanDraw}
-                statusMessage={turnBanner}
-              />
-            </div>
-
-            {/* Right Opponent (Femi) */}
-            <div className="shrink-0">
-              <OpponentSeat
-                player={botRight}
-                isCurrentTurn={gameState.currentPlayerIndex === 3}
-                position="right"
-                lastActionText={opponentActionText[botRight.id]}
+                hintsEnabled={settings.hintsEnabled}
+                onPlayCard={handleHumanPlayCard}
+                onDrawCard={handleHumanDraw}
               />
             </div>
           </div>
 
-          {/* Bottom Area: Human Player's Hand */}
-          <div className="w-full pt-2">
-            <PlayerHand
-              hand={humanPlayer.hand}
-              activeShape={gameState.activeShape}
-              activeNumber={gameState.activeNumber}
-              pendingPenalty={gameState.pendingPenalty}
-              isHumanTurn={isHumanTurn}
-              onPlayCard={handleHumanPlayCard}
-              onDrawCard={handleHumanDraw}
-            />
+          {/* Live Match Feed below the table */}
+          <div className="mt-3">
+            <GameLogView logs={gameState.log} />
           </div>
-        </div>
-
-        {/* Live Match Feed below the table */}
-        <div className="mt-3">
-          <GameLogView logs={gameState.log} />
-        </div>
-      </main>
+        </main>
+      )}
 
       {/* WHOT Shape Selection Modal */}
       <WhotShapeModal
@@ -365,19 +506,19 @@ export default function App() {
         onSelectShape={handleSelectWhotShape}
       />
 
-      {/* Signature Peek Next Card Modal */}
+      {/* Signature Daily Free / Paid Peek Modal */}
       <PeekModal
         isOpen={isPeekOpen}
         onClose={() => setIsPeekOpen(false)}
-        isFreePeek={isFreePeek}
+        isDailyFreePeek={isDailyFreePeekReady}
         gemBalance={gems}
         onConfirmPaidPeek={handleConfirmPaidPeek}
-        onUseFreePeek={handleFreePeekUsed}
+        onUseDailyFreePeek={handleUseDailyFreePeek}
         onOpenGemShop={() => setIsGemShopOpen(true)}
         peekResult={peekPrediction}
       />
 
-      {/* Daily Login Reward Modal */}
+      {/* 7-Day Streak Daily Bonus Modal */}
       <DailyRewardModal
         isOpen={isDailyRewardOpen}
         onClose={() => setIsDailyRewardOpen(false)}
@@ -387,6 +528,30 @@ export default function App() {
           setGems(getStoredGems());
           soundService.playVictory();
         }}
+      />
+
+      {/* Avatar Studio Customizer Modal */}
+      <AvatarCustomizerModal
+        isOpen={isAvatarStudioOpen}
+        onClose={() => setIsAvatarStudioOpen(false)}
+        currentAvatar={settings.avatar}
+        playerName={settings.playerName}
+        onSave={handleSaveAvatar}
+      />
+
+      {/* Game Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={settings}
+        onUpdateSettings={handleUpdateSettings}
+        onOpenAvatarStudio={() => setIsAvatarStudioOpen(true)}
+      />
+
+      {/* Multiplayer Coming Soon Modal */}
+      <MultiplayerModal
+        isOpen={isMultiplayerOpen}
+        onClose={() => setIsMultiplayerOpen(false)}
       />
 
       {/* Demo Gem Shop Modal */}
@@ -415,7 +580,7 @@ export default function App() {
         winner={gameState.winner}
         players={gameState.players}
         turnCount={gameState.turnCount}
-        onNewMatch={handleNewMatch}
+        onNewMatch={handleStartMatch}
       />
     </div>
   );

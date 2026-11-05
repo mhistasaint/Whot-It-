@@ -24,10 +24,25 @@
   }
 }
 
-/* Card table felt texture overlay */
-.felt-table {
+/* Card table felt texture overlays by theme */
+.felt-table-forest {
   background: radial-gradient(circle at 50% 45%, #18523b 0%, #123D2B 55%, #08291F 100%);
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.7);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.75);
+}
+
+.felt-table-mahogany {
+  background: radial-gradient(circle at 50% 45%, #5e1f16 0%, #3E1812 55%, #1c0805 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+}
+
+.felt-table-indigo {
+  background: radial-gradient(circle at 50% 45%, #1e293b 0%, #0f172a 55%, #020617 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85);
+}
+
+.felt-table-sunset {
+  background: radial-gradient(circle at 50% 45%, #78350f 0%, #431407 55%, #1f0702 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
 }
 
 /* Smooth horizontal scrollbar */

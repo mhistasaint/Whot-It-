@@ -49,12 +49,19 @@ export interface GameLogEntry {
 }
 
 export type GameStatus =
+  | 'LOBBY'
   | 'PLAYING'
   | 'WAITING_WHOT_SHAPE'
   | 'GAME_OVER';
 
+export type GameMode = '1v1' | '1v2' | '1v3' | '1v4';
+export type BotDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+export type VisualTheme = 'forest' | 'mahogany' | 'indigo' | 'sunset';
+
 export interface GameState {
   status: GameStatus;
+  mode: GameMode;
+  difficulty: BotDifficulty;
   players: Player[];
   currentPlayerIndex: number;
   drawPile: Card[];
@@ -62,7 +69,6 @@ export interface GameState {
   activeShape: CardShape;
   activeNumber: number;
   pendingPenalty: PendingPenalty | null;
-  freePeeksRemaining: number;
   turnCount: number;
   winner: Player | null;
   lastPlayedCard: Card | null;
