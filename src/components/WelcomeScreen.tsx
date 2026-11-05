@@ -108,17 +108,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <span>Play</span>
           </button>
 
-          {/* Locked Sign In Button */}
+          {/* Sign In Button */}
           <button
             onClick={handleSignInClick}
-            className="w-full sm:flex-1 py-3.5 px-4 rounded-2xl bg-[var(--theme-bg-surface)] hover:bg-[var(--theme-bg-elevated)] border-2 border-[var(--theme-border)] hover:border-[var(--theme-gold)]/60 text-[var(--theme-text-primary)] font-display font-extrabold text-sm sm:text-base transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 active:scale-95 relative group"
-            title="Account credentials unlock when Multiplayer goes live"
+            className="w-full sm:flex-1 py-3.5 px-5 rounded-2xl bg-[var(--theme-bg-surface)] hover:bg-[var(--theme-bg-elevated)] border-2 border-[var(--theme-gold)] text-[var(--theme-gold)] font-display font-extrabold text-sm sm:text-base transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 active:scale-95"
           >
             <Lock className="w-4 h-4 text-[var(--theme-gold)]" />
             <span>Sign In</span>
-            <span className="text-[9px] uppercase tracking-wider font-extrabold bg-[var(--theme-gold)]/15 text-[var(--theme-gold)] px-1.5 py-0.5 rounded-full border border-[var(--theme-gold)]/30">
-              Locked
-            </span>
           </button>
 
           {/* Settings Button */}
