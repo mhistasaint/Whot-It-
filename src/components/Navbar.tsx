@@ -13,6 +13,8 @@ interface NavbarProps {
   onOpenGemShop: () => void;
   onOpenSettings: () => void;
   onOpenLobby?: () => void;
+  onOpenWelcome?: () => void;
+  onOpenProfile?: () => void;
   onNewMatch: () => void;
   isDailyFreePeek: boolean;
   onTriggerPeek: () => void;
@@ -32,6 +34,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenGemShop,
   onOpenSettings,
   onOpenLobby,
+  onOpenWelcome,
+  onOpenProfile,
   onNewMatch,
   isDailyFreePeek,
   onTriggerPeek,
@@ -55,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           <div
-            onClick={onOpenLobby}
+            onClick={onOpenLobby || onOpenWelcome}
             className="flex items-center gap-2 cursor-pointer group"
           >
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-accent)] flex items-center justify-center text-[var(--theme-accent)] font-serif font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
@@ -69,17 +73,35 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Zone 2: Navigation Links */}
         <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-xs sm:text-sm font-medium text-[var(--theme-text-muted)] overflow-x-auto no-scrollbar py-1">
+          {onOpenWelcome && (
+            <button
+              onClick={onOpenWelcome}
+              className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              Home
+            </button>
+          )}
+          {onOpenLobby && (
+            <button
+              onClick={onOpenLobby}
+              className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              Gameplay
+            </button>
+          )}
+          {onOpenProfile && (
+            <button
+              onClick={onOpenProfile}
+              className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              My Profile
+            </button>
+          )}
           <button
             onClick={onOpenHowToPlay}
             className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             How to Play
-          </button>
-          <button
-            onClick={onOpenStats}
-            className="hover:text-[var(--theme-accent)] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            Statistics
           </button>
           <button
             onClick={onOpenDailyReward}

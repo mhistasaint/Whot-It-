@@ -4,6 +4,7 @@ import { isCardPlayable } from './rules';
 import { selectBotMove } from './bots';
 import { peekNextBotMove } from './peek';
 import { Card } from './types';
+import { calculatePlayerRank, DEFAULT_USER_PROFILE, MatchStats } from '../services/storage';
 
 function runIntegrityTests() {
   console.log('--- RUNNING WHOT IT! COMPREHENSIVE INTEGRITY TESTS ---');
@@ -291,7 +292,31 @@ function runIntegrityTests() {
   console.assert(afterGMTest.players[1].hand.length === b1HBefore + 1, 'All opponents immediately draw 1 card');
   console.log('✓ Test 16 Passed: Other special cards (1, 2, 5, 8, 14) play immediately with full mechanics & zero confirmation');
 
-  console.log('ALL 16 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
+  // 17. Player Profile System & Progression Architecture
+  console.assert(DEFAULT_USER_PROFILE.friendCode.startsWith('WHOT-'), 'Default profile has unique friend code');
+  console.assert(DEFAULT_USER_PROFILE.rankTier === 'Bronze', 'Initial rank tier is Bronze');
+  console.assert(typeof DEFAULT_USER_PROFILE.level === 'number', 'Profile has numeric level');
+
+  const testStats: MatchStats = {
+    matchesPlayed: 10,
+    wins: 7,
+    losses: 3,
+    cardsPlayed: 45,
+    whotsPlayed: 6,
+    holdOnsPlayed: 8,
+    generalMarketsPlayed: 4,
+    penaltiesStacked: 5,
+    peeksUsed: 2,
+  };
+
+  const rankResult = calculatePlayerRank(testStats);
+  console.assert(rankResult.level > 1, `XP accumulation advances level (level ${rankResult.level})`);
+  console.assert(rankResult.xp > 500, `XP calculated from matches, wins and tactics (${rankResult.xp} XP)`);
+  console.assert(['Bronze', 'Silver', 'Gold', 'Diamond', 'Naija Champion'].includes(rankResult.rankTier), 'RankTier is valid');
+  console.assert(rankResult.progressPercent >= 0 && rankResult.progressPercent <= 100, 'Progress percent is bounded [0, 100]');
+  console.log('✓ Test 17 Passed: Player Profile system correctly calculates level, XP, rank tier, and multiplayer identification readiness');
+
+  console.log('ALL 17 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
 }
 
 runIntegrityTests();

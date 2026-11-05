@@ -1,5 +1,5 @@
-import React from 'react';
-import { GameMode, BotDifficulty, PlayerAvatar } from '../game/types';
+import React, { useState } from 'react';
+import { GameMode, BotDifficulty, PlayerAvatar, UserProfile } from '../game/types';
 import { AvatarView } from './AvatarView';
 
 interface WelcomeLobbyProps {
@@ -10,16 +10,19 @@ interface WelcomeLobbyProps {
   canUseFreePeek: boolean;
   selectedMode: GameMode;
   selectedDifficulty: BotDifficulty;
+  userProfile?: UserProfile;
   onSelectMode: (mode: GameMode) => void;
   onSelectDifficulty: (difficulty: BotDifficulty) => void;
   onPlayGame: () => void;
   onOpenAvatarStudio: () => void;
   onOpenDailyBonus: () => void;
   onOpenGemShop: () => void;
-  onOpenStats: () => void;
+  onOpenStats?: () => void;
   onOpenHowToPlay: () => void;
   onOpenSettings: () => void;
   onOpenMultiplayer: () => void;
+  onOpenProfile?: () => void;
+  onBackToWelcome?: () => void;
 }
 
 const MODES: Array<{ id: GameMode; name: string; opponents: number; desc: string; icon: string }> = [
@@ -43,6 +46,7 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
   canUseFreePeek,
   selectedMode,
   selectedDifficulty,
+  userProfile,
   onSelectMode,
   onSelectDifficulty,
   onPlayGame,
@@ -53,37 +57,57 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
   onOpenHowToPlay,
   onOpenSettings,
   onOpenMultiplayer,
+  onOpenProfile,
+  onBackToWelcome,
 }) => {
+  const [selectedModeStage, setSelectedModeStage] = useState<GameMode | null>(null);
+  const activeModeObj = MODES.find(m => m.id === (selectedModeStage || selectedMode));
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-4 md:py-8 flex flex-col justify-between min-h-[85vh] select-none animate-fade-in text-[var(--theme-text-primary)]">
       
       {/* Lobby Top Banner / Identity Section */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] rounded-3xl p-4 md:p-6 shadow-xl backdrop-blur-sm transition-colors duration-250">
         
-        {/* Left: Player Profile Badge */}
+        {/* Left: Player Profile Badge & Welcome Back link */}
         <div className="flex items-center gap-3.5 w-full md:w-auto">
+          {onBackToWelcome && (
+            <button
+              onClick={onBackToWelcome}
+              className="p-2 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-gold)] text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
+              title="Return to Home Screen"
+            >
+              <span>←</span>
+              <span className="hidden sm:inline">Home</span>
+            </button>
+          )}
+
           <div
-            onClick={onOpenAvatarStudio}
-            className="cursor-pointer relative group"
-            title="Click to customize avatar"
+            onClick={onOpenProfile || onOpenAvatarStudio}
+            className="cursor-pointer relative group shrink-0"
+            title="Click to view/edit profile"
           >
             <AvatarView avatar={avatar} name={playerName} size="lg" />
-            <span className="absolute -bottom-1 -right-1 bg-[var(--theme-gold)] text-[var(--theme-accent-text)] text-[10px] font-bold px-1.5 py-0.2 rounded-full border border-[var(--theme-bg-main)] shadow group-hover:scale-110 transition-transform">
-              Edit
-            </span>
           </div>
 
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="font-display font-extrabold text-lg md:text-xl text-[var(--theme-text-primary)] tracking-tight">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2
+                onClick={onOpenProfile || onOpenAvatarStudio}
+                className="font-display font-extrabold text-lg md:text-xl text-[var(--theme-text-primary)] tracking-tight hover:text-[var(--theme-gold)] transition-colors cursor-pointer"
+              >
                 {playerName}
               </h2>
               <span className="text-[10px] uppercase font-bold text-[var(--theme-gold)] px-2 py-0.5 rounded-full bg-[var(--theme-gold)]/15 border border-[var(--theme-gold)]/30">
-                Challenger
+                {userProfile?.title || 'Challenger'}
               </span>
+              {userProfile && (
+                <span className="text-[10px] font-bold text-[var(--theme-accent)] bg-[var(--theme-bg-main)] px-2 py-0.5 rounded-full border border-[var(--theme-border)]">
+                  Lvl {userProfile.level} · {userProfile.rankTier}
+                </span>
+              )}
             </div>
             <p className="text-xs text-[var(--theme-text-muted)] mt-0.5">
-              Welcome to the WHOT table!
+              {userProfile?.bio ? `"${userProfile.bio}"` : 'Welcome to the WHOT table!'}
             </p>
           </div>
         </div>
@@ -127,108 +151,147 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
 
       {/* Main Game Setup Centerpiece */}
       <div className="my-6 md:my-8 bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-border)] rounded-3xl p-5 md:p-8 shadow-2xl transition-colors duration-250">
-        
-        {/* Game Mode Selector Cards */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="font-display font-extrabold text-base md:text-lg text-[var(--theme-text-primary)] tracking-tight">
-                Select Game Mode
-              </h3>
-              <p className="text-xs text-[var(--theme-text-muted)]">
-                Choose the number of computer opponents at your table
-              </p>
+        {!selectedModeStage ? (
+          /* Stage 1: Select Game Mode */
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-display font-extrabold text-lg md:text-xl text-[var(--theme-text-primary)] tracking-tight">
+                  Select Game Mode
+                </h3>
+                <p className="text-xs text-[var(--theme-text-muted)]">
+                  Choose your table setup to proceed to difficulty and play
+                </p>
+              </div>
             </div>
-            <span className="text-xs font-bold text-[var(--theme-gold)] hidden sm:inline">
-              Selected: {selectedMode}
-            </span>
-          </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {MODES.map(mode => {
-              const isSelected = selectedMode === mode.id;
-              return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {MODES.map(mode => (
                 <button
                   key={mode.id}
-                  onClick={() => onSelectMode(mode.id)}
-                  className={`p-3.5 md:p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
-                    isSelected
-                      ? 'border-[var(--theme-gold)] bg-[var(--theme-bg-elevated)] shadow-lg ring-2 ring-[var(--theme-gold)]'
-                      : 'border-[var(--theme-border)]/60 bg-[var(--theme-bg-main)]/60 hover:border-[var(--theme-gold)]/50 hover:bg-[var(--theme-bg-elevated)]/50'
-                  }`}
+                  onClick={() => {
+                    onSelectMode(mode.id);
+                    setSelectedModeStage(mode.id);
+                  }}
+                  className="p-4 rounded-2xl border border-[var(--theme-border)]/70 bg-[var(--theme-bg-main)]/60 hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] text-left transition-all cursor-pointer group hover:scale-[1.01] active:scale-95 shadow-sm"
                 >
-                  {isSelected && (
-                    <span className="absolute top-2 right-2 text-[9px] font-extrabold uppercase bg-[var(--theme-gold)] text-[var(--theme-accent-text)] px-1.5 py-0.5 rounded-full">
-                      Active
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-3xl">{mode.icon}</span>
+                    <span className="text-xs font-bold text-[var(--theme-gold)] px-2 py-0.5 rounded-full bg-[var(--theme-gold)]/10 border border-[var(--theme-gold)]/20">
+                      {mode.opponents} Bot{mode.opponents > 1 ? 's' : ''}
                     </span>
-                  )}
-                  <span className="text-2xl mb-1.5 block">{mode.icon}</span>
-                  <h4 className="font-display font-extrabold text-sm md:text-base text-[var(--theme-text-primary)]">
+                  </div>
+                  <h4 className="font-display font-extrabold text-base text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] transition-colors">
                     {mode.name}
                   </h4>
-                  <span className="text-xs text-[var(--theme-gold)] font-semibold block mt-0.5">
-                    {mode.opponents} Opponent{mode.opponents > 1 ? 's' : ''}
-                  </span>
-                  <p className="text-[11px] text-[var(--theme-text-muted)] mt-1 leading-snug">
+                  <p className="text-xs text-[var(--theme-text-muted)] mt-1 leading-snug">
                     {mode.desc}
                   </p>
+                  <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-[var(--theme-gold)]">
+                    <span>Select Mode</span>
+                    <span>→</span>
+                  </div>
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Difficulty Selection */}
-        <div className="mb-8 pt-4 border-t border-[var(--theme-border-subtle)]">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="font-display font-extrabold text-sm md:text-base text-[var(--theme-text-primary)] tracking-tight">
-                Computer Difficulty
-              </h3>
-              <p className="text-xs text-[var(--theme-text-muted)]">
-                Directly influences bot tactical logic and special card responses
-              </p>
+              ))}
             </div>
           </div>
+        ) : (
+          /* Stage 2: Selected Mode Header with Cancel, Difficulty, and Play Button */
+          <div className="space-y-6">
+            {/* Mode Banner & Cancel Option */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)]">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{activeModeObj?.icon || '👑'}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--theme-gold)] bg-[var(--theme-gold)]/15 px-2 py-0.5 rounded-full">
+                      Selected Mode
+                    </span>
+                    <span className="text-xs text-[var(--theme-text-muted)]">
+                      {activeModeObj?.opponents} Computer Opponent{activeModeObj && activeModeObj.opponents > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <h3 className="font-display font-black text-lg text-[var(--theme-text-primary)] mt-0.5">
+                    {activeModeObj?.name}
+                  </h3>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-3 gap-2.5">
-            {DIFFICULTIES.map(d => {
-              const isSelected = selectedDifficulty === d.id;
-              return (
-                <button
-                  key={d.id}
-                  onClick={() => onSelectDifficulty(d.id)}
-                  className={`py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer ${
-                    isSelected
-                      ? 'border-[var(--theme-gold)] bg-[var(--theme-gold)] text-[var(--theme-accent-text)] font-bold shadow-md ring-2 ring-[var(--theme-gold)]'
-                      : 'border-[var(--theme-border)] bg-[var(--theme-bg-main)] text-[var(--theme-text-muted)] hover:border-[var(--theme-gold)]/50'
-                  }`}
-                >
-                  <span className="font-display font-black text-xs md:text-sm block">
-                    {d.label}
-                  </span>
-                  <span className={`text-[10px] hidden sm:block leading-tight mt-0.5 ${isSelected ? 'opacity-85' : 'text-[var(--theme-text-muted)]'}`}>
-                    {d.desc}
-                  </span>
-                </button>
-              );
-            })}
+              {/* Cancel Button to Return to Mode Selection */}
+              <button
+                type="button"
+                onClick={() => setSelectedModeStage(null)}
+                className="px-3.5 py-2 rounded-xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-red-500/60 hover:text-red-400 text-xs font-bold text-[var(--theme-text-muted)] transition-all cursor-pointer flex items-center justify-center gap-1.5 self-start sm:self-auto"
+              >
+                <span>✕</span>
+                <span>Change Mode</span>
+              </button>
+            </div>
+
+            {/* Difficulty Selector */}
+            <div>
+              <div className="mb-2.5">
+                <h4 className="font-display font-extrabold text-sm md:text-base text-[var(--theme-text-primary)]">
+                  Select Difficulty
+                </h4>
+                <p className="text-xs text-[var(--theme-text-muted)]">
+                  Influence computer opponent tactical speed, card awareness and challenge
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                {DIFFICULTIES.map(d => {
+                  const isSelected = selectedDifficulty === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => onSelectDifficulty(d.id)}
+                      className={`py-3 px-3 rounded-xl border text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-[var(--theme-gold)] bg-[var(--theme-gold)] text-[var(--theme-accent-text)] font-black shadow-md ring-2 ring-[var(--theme-gold)]'
+                          : 'border-[var(--theme-border)] bg-[var(--theme-bg-main)] text-[var(--theme-text-muted)] hover:border-[var(--theme-gold)]/50'
+                      }`}
+                    >
+                      <span className="font-display font-black text-xs md:text-sm block">
+                        {d.label}
+                      </span>
+                      <span className={`text-[10px] hidden sm:block leading-tight mt-0.5 ${isSelected ? 'opacity-90' : 'text-[var(--theme-text-muted)]'}`}>
+                        {d.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* PLAY Action Button Alone */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={onPlayGame}
+                className="w-full sm:w-auto px-16 py-3.5 rounded-2xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-black text-base md:text-lg tracking-wide shadow-2xl transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 border-2 border-[var(--theme-accent)]"
+              >
+                <span>▶</span> PLAY
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* Prominent PLAY MATCH Action */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button
-            onClick={onPlayGame}
-            className="w-full sm:w-auto px-10 py-3.5 rounded-2xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-black text-base md:text-lg tracking-wide shadow-2xl transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 border-2 border-[var(--theme-accent)]"
-          >
-            <span>▶</span> PLAY MATCH ({selectedMode} · {selectedDifficulty})
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* Lobby Navigation Hub */}
+      {/* Lobby Navigation Hub (4 Clean Core Items) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <button
+          onClick={onOpenProfile || onOpenAvatarStudio}
+          className="p-3 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+        >
+          <span className="text-xl mb-1 block">👤</span>
+          <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">
+            My Profile
+          </span>
+          <span className="text-[10px] text-[var(--theme-text-muted)]">
+            Stats, records & ID
+          </span>
+        </button>
+
         <button
           onClick={onOpenMultiplayer}
           className="p-3 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
@@ -244,19 +307,6 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
           </span>
           <span className="text-[10px] text-[var(--theme-text-muted)]">
             Private tables & codes
-          </span>
-        </button>
-
-        <button
-          onClick={onOpenStats}
-          className="p-3 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
-        >
-          <span className="text-xl mb-1 block">📊</span>
-          <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">
-            Player Records
-          </span>
-          <span className="text-[10px] text-[var(--theme-text-muted)]">
-            Win rate & card stats
           </span>
         </button>
 

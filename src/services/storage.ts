@@ -1,4 +1,4 @@
-import { GameMode, BotDifficulty, VisualTheme, PlayerAvatar } from '../game/types';
+import { GameMode, BotDifficulty, VisualTheme, PlayerAvatar, UserProfile, PlayerRankTier, CardShape } from '../game/types';
 
 export interface DailyRewardState {
   lastClaimDate: string | null; // Format YYYY-MM-DD
@@ -57,6 +57,7 @@ const STORAGE_KEYS = {
   STATS: 'whot_it_match_stats_v2',
   SETTINGS: 'whot_it_settings_v2',
   WAITLIST: 'whot_it_multiplayer_waitlist_v2',
+  PROFILE: 'whot_it_user_profile_v2',
 };
 
 export const STREAK_REWARDS = [5, 10, 15, 20, 25, 35, 50]; // 7 days
@@ -354,3 +355,119 @@ export function joinWaitlist(): void {
     console.error('Failed to save waitlist', e);
   }
 }
+
+/**
+ * Player Profile System
+ */
+export const DEFAULT_USER_PROFILE: UserProfile = {
+  id: 'whot_usr_8492',
+  friendCode: 'WHOT-8492',
+  username: 'Adeola',
+  title: 'Naija Challenger',
+  bio: 'Never go to market twice! Always holding WHOT 20.',
+  avatar: DEFAULT_AVATAR,
+  favoriteShape: 'STAR',
+  region: 'Nigeria (West Africa)',
+  joinDate: 'November 2026',
+  level: 1,
+  xp: 150,
+  rankTier: 'Bronze',
+  hasCustomProfile: false,
+};
+
+export function calculatePlayerRank(stats: MatchStats): {
+  level: number;
+  xp: number;
+  rankTier: PlayerRankTier;
+  nextLevelXp: number;
+  progressPercent: number;
+} {
+  const baseScore =
+    stats.wins * 120 +
+    stats.matchesPlayed * 30 +
+    stats.cardsPlayed * 5 +
+    stats.whotsPlayed * 15 +
+    stats.penaltiesStacked * 25 +
+    stats.generalMarketsPlayed * 20;
+
+  const totalXp = Math.max(100, baseScore);
+  const xpPerLevel = 250;
+  const level = Math.floor(totalXp / xpPerLevel) + 1;
+  const currentLevelFloor = (level - 1) * xpPerLevel;
+  const nextLevelXp = level * xpPerLevel;
+  const progressInLevel = totalXp - currentLevelFloor;
+  const progressPercent = Math.min(100, Math.round((progressInLevel / xpPerLevel) * 100));
+
+  let rankTier: PlayerRankTier = 'Bronze';
+  if (level >= 15) rankTier = 'Naija Champion';
+  else if (level >= 10) rankTier = 'Diamond';
+  else if (level >= 6) rankTier = 'Gold';
+  else if (level >= 3) rankTier = 'Silver';
+
+  return {
+    level,
+    xp: totalXp,
+    rankTier,
+    nextLevelXp,
+    progressPercent,
+  };
+}
+
+export function getUserProfile(): UserProfile {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.PROFILE);
+    const settings = getPlayerSettings();
+    const stats = getMatchStats();
+    const rankInfo = calculatePlayerRank(stats);
+
+    if (!raw) {
+      const initial: UserProfile = {
+        ...DEFAULT_USER_PROFILE,
+        username: settings.playerName && settings.playerName !== 'You' ? settings.playerName : 'Adeola',
+        avatar: settings.avatar,
+        level: rankInfo.level,
+        xp: rankInfo.xp,
+        rankTier: rankInfo.rankTier,
+      };
+      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(initial));
+      return initial;
+    }
+
+    const parsed: UserProfile = JSON.parse(raw);
+    return {
+      ...DEFAULT_USER_PROFILE,
+      ...parsed,
+      level: rankInfo.level,
+      xp: rankInfo.xp,
+      rankTier: rankInfo.rankTier,
+    };
+  } catch {
+    return DEFAULT_USER_PROFILE;
+  }
+}
+
+export function saveUserProfile(updates: Partial<UserProfile>): UserProfile {
+  try {
+    const current = getUserProfile();
+    const merged: UserProfile = {
+      ...current,
+      ...updates,
+      hasCustomProfile: true,
+    };
+    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(merged));
+
+    // Keep settings playerName & avatar in sync
+    if (updates.username || updates.avatar) {
+      savePlayerSettings({
+        playerName: merged.username,
+        avatar: merged.avatar,
+      });
+    }
+
+    return merged;
+  } catch (e) {
+    console.error('Failed to save profile', e);
+    return getUserProfile();
+  }
+}
+

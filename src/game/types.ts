@@ -91,3 +91,22 @@ export interface PeekResult {
   chosenWhotShape?: CardShape;
   reason: string;
 }
+
+export type PlayerRankTier = 'Bronze' | 'Silver' | 'Gold' | 'Diamond' | 'Naija Champion';
+
+export interface UserProfile {
+  id: string;
+  friendCode: string;
+  username: string;
+  title: string;
+  bio: string;
+  avatar: PlayerAvatar;
+  favoriteShape: CardShape;
+  region: string;
+  joinDate: string;
+  level: number;
+  xp: number;
+  rankTier: PlayerRankTier;
+  hasCustomProfile: boolean;
+}
+

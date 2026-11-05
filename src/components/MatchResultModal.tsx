@@ -9,6 +9,7 @@ interface MatchResultModalProps {
   players: Player[];
   turnCount: number;
   onNewMatch: () => void;
+  onReturnToLobby?: () => void;
 }
 
 export const MatchResultModal: React.FC<MatchResultModalProps> = ({
@@ -17,6 +18,7 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
   players,
   turnCount,
   onNewMatch,
+  onReturnToLobby,
 }) => {
   const isHumanWinner = winner?.isHuman ?? false;
 
@@ -95,13 +97,23 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
           </div>
         </div>
 
-        {/* New Match Action */}
-        <button
-          onClick={onNewMatch}
-          className="w-full py-3 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-extrabold text-sm shadow-xl transition-all active:scale-95 cursor-pointer"
-        >
-          Deal New Match
-        </button>
+        {/* New Match & Return to Lobby Actions */}
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          {onReturnToLobby && (
+            <button
+              onClick={onReturnToLobby}
+              className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer"
+            >
+              Return to Lobby
+            </button>
+          )}
+          <button
+            onClick={onNewMatch}
+            className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-extrabold text-xs shadow-xl transition-all active:scale-95 cursor-pointer"
+          >
+            Deal New Match
+          </button>
+        </div>
       </div>
     </div>
   );

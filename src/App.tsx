@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CardShape, GameState, GameMode, BotDifficulty, PlayerAvatar } from './game/types';
+import { CardShape, GameState, GameMode, BotDifficulty, PlayerAvatar, UserProfile } from './game/types';
 import { initGame, playCard, drawCard, resolveWhotShape, cancelWhotShape } from './game/engine';
 import { selectBotMove } from './game/bots';
 import { peekNextBotMove } from './game/peek';
@@ -16,6 +16,8 @@ import {
   DailyRewardState,
   MatchStats,
   PlayerSettings,
+  getUserProfile,
+  saveUserProfile,
 } from './services/storage';
 import { soundService } from './services/sound';
 
@@ -33,6 +35,8 @@ import { StatsModal } from './components/StatsModal';
 import { MatchResultModal } from './components/MatchResultModal';
 import { GameLogView } from './components/GameLogView';
 import { WelcomeLobby } from './components/WelcomeLobby';
+import { WelcomeScreen } from './components/WelcomeScreen';
+import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { AvatarCustomizerModal } from './components/AvatarCustomizerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { MultiplayerModal } from './components/MultiplayerModal';
@@ -40,24 +44,29 @@ import { MultiplayerModal } from './components/MultiplayerModal';
 export default function App() {
   // Settings & Persistent State
   const [settings, setSettings] = useState<PlayerSettings>(() => getPlayerSettings());
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => getUserProfile());
   const [gems, setGems] = useState<number>(() => getStoredGems());
   const [rewardState, setRewardState] = useState<DailyRewardState>(() => getDailyRewardState());
   const [stats, setStats] = useState<MatchStats>(() => getMatchStats());
   const [isDailyFreePeekReady, setIsDailyFreePeekReady] = useState<boolean>(() => canUseDailyFreePeek());
+
+  // Screen View Management: WELCOME -> HOME (Main Home Screen / Lobby) -> MATCH (Game Table)
+  const [currentScreen, setCurrentScreen] = useState<'WELCOME' | 'HOME' | 'MATCH'>('WELCOME');
 
   // Game Engine State (starts at LOBBY by default)
   const [gameState, setGameState] = useState<GameState>(() =>
     initGame(
       settings.selectedMode,
       settings.difficulty,
-      settings.playerName,
-      settings.avatar,
+      userProfile.username || settings.playerName,
+      userProfile.avatar || settings.avatar,
       'LOBBY'
     )
   );
 
   // Modals
-  const [isLobbyOpen, setIsLobbyOpen] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileCreationMode, setIsProfileCreationMode] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isDailyRewardOpen, setIsDailyRewardOpen] = useState(false);
@@ -101,6 +110,8 @@ export default function App() {
 
   const handleSaveAvatar = (newAvatar: PlayerAvatar, newName: string) => {
     handleUpdateSettings({ avatar: newAvatar, playerName: newName });
+    const updatedProfile = saveUserProfile({ avatar: newAvatar, username: newName });
+    setUserProfile(updatedProfile);
     // Update active human player in current game state as well
     setGameState(prev => ({
       ...prev,
@@ -108,6 +119,23 @@ export default function App() {
         p.isHuman ? { ...p, name: newName, avatar: newAvatar } : p
       ),
     }));
+  };
+
+  const handleSaveProfile = (updates: Partial<UserProfile>) => {
+    const updated = saveUserProfile(updates);
+    setUserProfile(updated);
+    if (updates.username || updates.avatar) {
+      handleUpdateSettings({
+        playerName: updated.username,
+        avatar: updated.avatar,
+      });
+      setGameState(prev => ({
+        ...prev,
+        players: prev.players.map(p =>
+          p.isHuman ? { ...p, name: updated.username, avatar: updated.avatar } : p
+        ),
+      }));
+    }
   };
 
   // Start new match
@@ -119,15 +147,15 @@ export default function App() {
     const fresh = initGame(
       settings.selectedMode,
       settings.difficulty,
-      settings.playerName,
-      settings.avatar,
+      userProfile.username || settings.playerName,
+      userProfile.avatar || settings.avatar,
       'PLAYING'
     );
     setGameState(fresh);
-    setIsLobbyOpen(false);
+    setCurrentScreen('MATCH');
     setOpponentActionText({});
     soundService.playCardPlay();
-  }, [settings.selectedMode, settings.difficulty, settings.playerName, settings.avatar]);
+  }, [settings.selectedMode, settings.difficulty, userProfile.username, userProfile.avatar, settings.playerName, settings.avatar]);
 
   // Handle match conclusion statistics
   useEffect(() => {
@@ -148,7 +176,7 @@ export default function App() {
 
   // Automated Bot Turn Executor
   useEffect(() => {
-    if (gameState.status !== 'PLAYING' || isLobbyOpen) return;
+    if (gameState.status !== 'PLAYING' || currentScreen !== 'MATCH') return;
 
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     if (currentPlayer.isHuman) return;
@@ -219,7 +247,7 @@ export default function App() {
     gameState.pendingPenalty,
     gameState.players,
     gameState.difficulty,
-    isLobbyOpen,
+    currentScreen,
     settings.fastSpeed,
   ]);
 
@@ -353,32 +381,52 @@ export default function App() {
 
   return (
     <div className={`flex flex-col min-h-screen theme-${settings.theme} bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)] overflow-x-hidden`}>
-      {/* Top Bar Navigation */}
-      <Navbar
-        gems={gems}
-        soundEnabled={settings.soundEnabled}
-        musicEnabled={settings.musicEnabled}
-        onToggleSound={handleToggleSound}
-        onToggleMusic={handleToggleMusic}
-        onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
-        onOpenStats={() => setIsStatsOpen(true)}
-        onOpenDailyReward={() => setIsDailyRewardOpen(true)}
-        onOpenGemShop={() => setIsGemShopOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenLobby={() => setIsLobbyOpen(true)}
-        onNewMatch={handleStartMatch}
-        isDailyFreePeek={isDailyFreePeekReady}
-        onTriggerPeek={handleOpenPeek}
-        canPeek={gameState.status === 'PLAYING'}
-        isInGame={!isLobbyOpen}
-      />
-
-      {/* Main Content: Either Welcome Lobby OR Live Game Table */}
-      {isLobbyOpen ? (
-        <WelcomeLobby
-          playerName={settings.playerName}
-          avatar={settings.avatar}
+      {/* Top Bar Navigation (hidden on dedicated Welcome Screen) */}
+      {currentScreen !== 'WELCOME' && (
+        <Navbar
           gems={gems}
+          soundEnabled={settings.soundEnabled}
+          musicEnabled={settings.musicEnabled}
+          onToggleSound={handleToggleSound}
+          onToggleMusic={handleToggleMusic}
+          onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+          onOpenStats={() => setIsStatsOpen(true)}
+          onOpenDailyReward={() => setIsDailyRewardOpen(true)}
+          onOpenGemShop={() => setIsGemShopOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenLobby={() => setCurrentScreen('HOME')}
+          onOpenWelcome={() => setCurrentScreen('WELCOME')}
+          onOpenProfile={() => {
+            setIsProfileCreationMode(false);
+            setIsProfileOpen(true);
+          }}
+          onNewMatch={handleStartMatch}
+          isDailyFreePeek={isDailyFreePeekReady}
+          onTriggerPeek={handleOpenPeek}
+          canPeek={gameState.status === 'PLAYING'}
+          isInGame={currentScreen === 'MATCH'}
+        />
+      )}
+
+      {/* Screen 1: Dedicated Welcome Screen (WHOT It!, Tagline, Card Art, Play, Sign In, Settings) */}
+      {currentScreen === 'WELCOME' && (
+        <WelcomeScreen
+          onPlay={() => setCurrentScreen('HOME')}
+          onSignIn={() => {
+            setIsProfileCreationMode(false);
+            setIsProfileOpen(true);
+          }}
+          onSettings={() => setIsSettingsOpen(true)}
+        />
+      )}
+
+      {/* Screen 2: Main Home Screen / Lobby */}
+      {currentScreen === 'HOME' && (
+        <WelcomeLobby
+          playerName={userProfile.username || settings.playerName}
+          avatar={userProfile.avatar || settings.avatar}
+          gems={gems}
+          userProfile={userProfile}
           canClaimDailyReward={rewardState.canClaimToday}
           canUseFreePeek={isDailyFreePeekReady}
           selectedMode={settings.selectedMode}
@@ -393,8 +441,16 @@ export default function App() {
           onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenMultiplayer={() => setIsMultiplayerOpen(true)}
+          onOpenProfile={() => {
+            setIsProfileCreationMode(false);
+            setIsProfileOpen(true);
+          }}
+          onBackToWelcome={() => setCurrentScreen('WELCOME')}
         />
-      ) : (
+      )}
+
+      {/* Screen 3: Live Gameplay Arena Table */}
+      {currentScreen === 'MATCH' && (
         <main className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-1 sm:p-3 animate-fade-in">
           {/* Dedicated Responsive Game Table Canvas with Dynamic Theme */}
           <div className="felt-table relative w-full rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-[var(--theme-table-border)] shadow-2xl p-2 sm:p-4 flex flex-col justify-between h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-4.5rem)] max-h-[860px] min-h-[500px] overflow-hidden">
@@ -601,6 +657,22 @@ export default function App() {
         stats={stats}
       />
 
+      {/* Player Profile & Identity Modal */}
+      <PlayerProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        profile={userProfile}
+        stats={stats}
+        gems={gems}
+        onSaveProfile={handleSaveProfile}
+        onOpenAvatarStudio={() => {
+          setIsProfileOpen(false);
+          setIsAvatarStudioOpen(true);
+        }}
+        isCreationMode={isProfileCreationMode}
+      />
+
+
       {/* Match Result Modal */}
       <MatchResultModal
         isOpen={gameState.status === 'GAME_OVER'}
@@ -608,6 +680,7 @@ export default function App() {
         players={gameState.players}
         turnCount={gameState.turnCount}
         onNewMatch={handleStartMatch}
+        onReturnToLobby={() => setCurrentScreen('HOME')}
       />
     </div>
   );
