@@ -1,0 +1,6 @@
+{
+  "name": "WHOT It! - Nigerian Card Game",
+  "description": "Play the classic Nigerian Whot card game against three tactical AI opponents with Hold On, Pick Two, General Market, and the signature Peek Next Card feature.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
