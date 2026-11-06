@@ -32,9 +32,8 @@ export const CenterTable: React.FC<CenterTableProps> = ({
 
   return (
     <div className="relative flex flex-col items-center justify-center w-full max-w-xl mx-auto py-1 sm:py-2 select-none text-[var(--theme-text-primary)]">
-      {/* Active Shape, Context Bar & 15s Countdown Timer */}
+      {/* Active Shape & Context Bar */}
       <div className="flex items-center flex-wrap justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-        {/* Active Shape & Context Bar */}
         <div className="flex items-center gap-2 sm:gap-3 bg-[var(--theme-bg-main)]/90 border border-[var(--theme-gold)]/40 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 shadow-md backdrop-blur-sm text-[11px] sm:text-xs">
           <div className="flex items-center gap-1.5 font-medium text-[var(--theme-text-muted)]">
             <span>Shape:</span>
@@ -53,24 +52,6 @@ export const CenterTable: React.FC<CenterTableProps> = ({
             </strong>
           </div>
         </div>
-
-        {/* 15s Countdown Timer for Human Player */}
-        {isHumanTurn && turnTimeRemaining !== undefined && (
-          <div
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border transition-all shadow-md ${
-              turnTimeRemaining <= 5
-                ? 'bg-red-950/95 border-red-500 text-red-200 animate-pulse ring-2 ring-red-500/50'
-                : 'bg-[var(--theme-bg-main)]/90 border-[var(--theme-gold)]/60 text-[var(--theme-gold)]'
-            }`}
-            title="15-second human turn countdown. Draws automatically if time runs out!"
-          >
-            <span className="text-xs sm:text-sm">{turnTimeRemaining <= 5 ? '⚠️' : '⏱️'}</span>
-            <span className="font-mono font-black text-xs sm:text-sm tracking-tight">{turnTimeRemaining}s</span>
-            <span className={`text-[10px] uppercase font-extrabold ${turnTimeRemaining <= 5 ? 'text-red-300' : 'text-[var(--theme-text-muted)]'}`}>
-              {turnTimeRemaining <= 5 ? 'Auto-Draw!' : 'Your Turn'}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Pending Penalty Alert Banner */}
@@ -84,10 +65,14 @@ export const CenterTable: React.FC<CenterTableProps> = ({
       )}
 
       {/* Main Table Decks (Draw Pile + Discard Pile) */}
-      <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-10 my-1">
-        {/* Draw Pile / General Market */}
-        <div className="flex flex-col items-center group">
-          <div className="relative">
+      <div className="flex items-center justify-center gap-6 sm:gap-10 md:gap-14 my-1">
+        {/* Draw Pile / General Market (Direct Tap to Pick from Market) */}
+        <div className="flex flex-col items-center">
+          <div
+            onClick={isHumanTurn && canHumanDraw ? onDrawClick : undefined}
+            className={`relative group ${isHumanTurn && canHumanDraw ? 'cursor-pointer' : 'cursor-default'}`}
+            title={isHumanTurn && canHumanDraw ? 'Tap to draw from Market' : undefined}
+          >
             {/* Layered Deck effect */}
             {drawPileCount > 2 && (
               <div className="absolute inset-0 translate-x-1 sm:translate-x-1.5 translate-y-1 sm:translate-y-1.5 bg-[var(--theme-bg-main)] border border-[var(--theme-gold)]/20 rounded-lg pointer-events-none" />
@@ -99,26 +84,21 @@ export const CenterTable: React.FC<CenterTableProps> = ({
               faceDown
               size="table"
               isPlayable={isHumanTurn && canHumanDraw}
-              onClick={isHumanTurn && canHumanDraw ? onDrawClick : undefined}
               className={`transition-all duration-200 ${
                 isHumanTurn && canHumanDraw
-                  ? 'ring-2 ring-[var(--theme-gold)] hover:scale-105 cursor-pointer shadow-xl'
+                  ? 'ring-2 ring-[var(--theme-gold)] hover:scale-105 active:scale-95 shadow-xl hover:ring-offset-2 hover:ring-offset-[var(--theme-bg-main)]'
                   : 'cursor-default opacity-90'
               }`}
             />
             {/* Draw Pile Count Badge */}
-            <div className="absolute -bottom-2 sm:-bottom-2.5 left-1/2 -translate-x-1/2 bg-[var(--theme-bg-main)] border border-[var(--theme-gold)]/40 text-[var(--theme-gold)] font-display font-black text-[9px] sm:text-xs px-2 py-0.5 rounded-full shadow whitespace-nowrap">
-              {drawPileCount} Market
+            <div className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 border font-display font-black text-[9px] sm:text-xs px-2.5 py-0.5 rounded-full shadow-lg whitespace-nowrap transition-all ${
+              isHumanTurn && canHumanDraw
+                ? 'bg-[var(--theme-gold)] text-[var(--theme-accent-text)] border-[var(--theme-gold)] animate-pulse'
+                : 'bg-[var(--theme-bg-main)] border-[var(--theme-gold)]/40 text-[var(--theme-gold)]'
+            }`}>
+              {drawPileCount} Market {isHumanTurn && canHumanDraw ? '· Tap' : ''}
             </div>
           </div>
-          {isHumanTurn && canHumanDraw && (
-            <button
-              onClick={onDrawClick}
-              className="mt-3 sm:mt-4 px-3 sm:px-3.5 py-1.5 bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-extrabold text-[11px] sm:text-xs rounded-lg shadow-md transition-all active:scale-95 cursor-pointer border border-[var(--theme-accent)] min-h-[36px] flex items-center"
-            >
-              Go to Market
-            </button>
-          )}
         </div>
 
         {/* Central Discard Pile */}
@@ -145,15 +125,6 @@ export const CenterTable: React.FC<CenterTableProps> = ({
           </span>
         </div>
       </div>
-
-      {/* Dynamic Status / Game Hint */}
-      {statusMessage && (
-        <div className="mt-2 sm:mt-3 text-center px-2">
-          <p className="text-[11px] sm:text-xs md:text-sm text-[var(--theme-text-primary)] font-medium bg-[var(--theme-bg-main)]/80 border border-[var(--theme-border)] px-3 py-1 sm:py-1.5 rounded-xl max-w-md mx-auto shadow-sm">
-            {statusMessage}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

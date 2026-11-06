@@ -13,63 +13,81 @@ interface OpponentSeatProps {
 export const OpponentSeat: React.FC<OpponentSeatProps> = ({
   player,
   isCurrentTurn,
-  position,
+  position = 'top',
   lastActionText,
   compact = false,
 }) => {
   const cardCount = player.hand.length;
+  const cardsToShow = Math.min(Math.max(cardCount, 1), compact ? 4 : 5);
+
+  // Orientation-specific layout tweaks for side positions (left/right table edges)
+  const isSidePosition = position === 'left' || position === 'right';
 
   return (
     <div
-      className={`relative flex flex-col items-center select-none transition-all duration-200 shrink-0 ${
-        isCurrentTurn ? 'scale-105 z-20' : 'opacity-90'
-      } ${compact ? 'max-w-[78px] sm:max-w-[110px]' : 'max-w-[100px] sm:max-w-[130px]'}`}
+      className={`relative flex ${
+        isSidePosition ? 'flex-col items-center' : 'flex-col items-center'
+      } select-none transition-all duration-300 shrink-0 ${
+        isCurrentTurn ? 'scale-105 z-30' : 'opacity-90 hover:opacity-100'
+      } ${compact ? 'max-w-[85px] sm:max-w-[110px]' : 'max-w-[110px] sm:max-w-[140px]'}`}
     >
-      {/* Speech / Action Bubble */}
+      {/* Dynamic Action / Speech Bubble */}
       {lastActionText && (
-        <div className="absolute -top-7 sm:-top-9 z-30 animate-fade-in bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border border-[var(--theme-gold)] text-[9px] sm:text-xs px-2 py-0.5 sm:py-1 rounded-full shadow-lg whitespace-nowrap font-medium pointer-events-none max-w-[130px] sm:max-w-[180px] truncate">
+        <div className="absolute -top-8 sm:-top-10 z-40 animate-fade-in bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border border-[var(--theme-gold)] text-[10px] sm:text-xs px-2.5 py-1 rounded-full shadow-xl whitespace-nowrap font-bold pointer-events-none max-w-[140px] sm:max-w-[190px] truncate">
           {lastActionText}
         </div>
       )}
 
-      {/* Opponent Card Stack Cues (Face down mini cards) */}
-      <div className="relative -mb-2 sm:-mb-3 z-10 flex items-center justify-center">
-        <div className="flex -space-x-2 sm:-space-x-3 items-center">
-          {Array.from({ length: Math.min(cardCount, compact ? 3 : 4) }).map((_, idx) => (
-            <div
-              key={idx}
-              className={`${
-                compact ? 'w-4 h-5 sm:w-5 sm:h-7' : 'w-4 h-6 sm:w-6 sm:h-8'
-              } rounded-[2px] sm:rounded-[3px] bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)]/40 shadow-sm transform transition-transform`}
-              style={{
-                transform: `rotate(${(idx - 1) * 7}deg)`,
-              }}
-            />
-          ))}
+      {/* Opponent Card Fan (Authentic Nigerian WHOT Card Backs) */}
+      <div className="relative mb-1 z-10 flex items-center justify-center">
+        <div className="flex -space-x-3 sm:-space-x-4 items-center">
+          {Array.from({ length: cardsToShow }).map((_, idx) => {
+            const rotation = (idx - (cardsToShow - 1) / 2) * 8;
+            return (
+              <div
+                key={idx}
+                className={`${
+                  compact ? 'w-6 h-9 sm:w-8 sm:h-11' : 'w-7 h-10 sm:w-9 sm:h-13'
+                } rounded-[3px] sm:rounded-md bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)]/60 shadow-md transform transition-transform overflow-hidden relative`}
+                style={{
+                  transform: `rotate(${rotation}deg)`,
+                  zIndex: idx + 1,
+                }}
+              >
+                {/* Traditional Whot Geometric Card Back Inset */}
+                <div className="absolute inset-0.5 border border-[var(--theme-gold)]/30 rounded-[2px] bg-[var(--theme-bg-main)] flex flex-col items-center justify-center p-0.5">
+                  <div className="w-full h-full border border-dashed border-[var(--theme-gold)]/30 rounded-[1px] flex flex-col items-center justify-center">
+                    <span className="font-display font-black text-[var(--theme-gold)] text-[7px] sm:text-[9px] leading-none">
+                      W
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
+
         {/* Badge with exact card count */}
-        <div className="absolute -bottom-1 -right-2 bg-[var(--theme-gold)] text-[var(--theme-accent-text)] font-display font-black text-[9px] sm:text-xs px-1.5 py-0.2 sm:py-0.5 rounded-full shadow-md min-w-[18px] text-center">
+        <div className="absolute -bottom-1 -right-2 bg-[var(--theme-gold)] text-[var(--theme-accent-text)] font-display font-black text-[9px] sm:text-xs px-2 py-0.5 rounded-full shadow-lg border border-[var(--theme-bg-main)] min-w-[20px] text-center z-20">
           {cardCount}
         </div>
       </div>
 
       {/* Avatar with Turn Ring */}
-      <div className="mt-1 sm:mt-2">
+      <div className="mt-0.5 sm:mt-1">
         <AvatarView
           avatar={player.avatar}
           name={player.name}
-          size={compact ? 'sm' : position === 'top' ? 'md' : 'sm'}
+          size={compact ? 'sm' : 'md'}
           isCurrentTurn={isCurrentTurn}
         />
       </div>
 
-      {/* Opponent Name & Status */}
-      <div className="mt-0.5 sm:mt-1 flex flex-col items-center text-center w-full px-0.5">
-        <div className="flex items-center justify-center gap-1 w-full">
-          <span className="font-display font-bold text-[11px] sm:text-xs md:text-sm text-[var(--theme-text-primary)] truncate max-w-full">
-            {player.name}
-          </span>
-        </div>
+      {/* Opponent Name & Card Status (NO hints) */}
+      <div className="mt-1 flex flex-col items-center text-center w-full px-0.5">
+        <span className="font-display font-bold text-[11px] sm:text-xs md:text-sm text-[var(--theme-text-primary)] truncate max-w-full">
+          {player.name}
+        </span>
         <span
           className={`text-[9px] sm:text-[10px] truncate max-w-full font-medium ${
             cardCount === 1 ? 'text-amber-400 font-bold animate-pulse' : 'text-[var(--theme-text-muted)]'

@@ -40,6 +40,7 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { AvatarCustomizerModal } from './components/AvatarCustomizerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { MultiplayerModal } from './components/MultiplayerModal';
+import { LandscapePrompt } from './components/LandscapePrompt';
 import { Home, Pause, Play, Settings, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -254,6 +255,7 @@ export default function App() {
     gameState.difficulty,
     currentScreen,
     settings.fastSpeed,
+    isGamePaused,
   ]);
 
   // Human player actions
@@ -351,22 +353,22 @@ export default function App() {
     isMultiplayerOpen ||
     isPeekOpen;
 
-  // Reset and run 15-second countdown on human turn
+  // Reset turn countdown to 15s whenever it becomes human's turn or turnCount advances
   useEffect(() => {
-    if (!isHumanTurn || isAnyModalOpen || isGamePaused) {
-      if (!isHumanTurn) {
-        setTurnTimeRemaining(15);
-      }
+    if (isHumanTurn) {
+      setTurnTimeRemaining(15);
+    }
+  }, [isHumanTurn, gameState.turnCount]);
+
+  // Countdown timer ticker: pauses immediately when isGamePaused or any modal is open!
+  useEffect(() => {
+    if (!isHumanTurn || isAnyModalOpen || isGamePaused || turnTimeRemaining <= 0) {
       return;
     }
-
-    // Reset to 15s at start of human turn
-    setTurnTimeRemaining(15);
 
     const interval = setInterval(() => {
       setTurnTimeRemaining(prev => {
         if (prev <= 1) {
-          clearInterval(interval);
           return 0;
         }
         if (prev <= 4) {
@@ -377,11 +379,11 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isHumanTurn, gameState.turnCount, isAnyModalOpen]);
+  }, [isHumanTurn, isAnyModalOpen, isGamePaused, turnTimeRemaining]);
 
   // When countdown hits 0 on human turn: auto-draw from market to enforce game pressure!
   useEffect(() => {
-    if (isHumanTurn && turnTimeRemaining === 0) {
+    if (isHumanTurn && turnTimeRemaining === 0 && !isGamePaused && !isAnyModalOpen) {
       // Clear staged WHOT 20 if user was selecting shape
       setStagedWhotCardId(null);
       setSelectedCardId(null);
@@ -401,7 +403,7 @@ export default function App() {
       soundService.playCardDraw();
       setGameState(prev => drawCard(prev, 0));
     }
-  }, [isHumanTurn, turnTimeRemaining]);
+  }, [isHumanTurn, turnTimeRemaining, isGamePaused, isAnyModalOpen]);
 
   // Peek feature
   const handleOpenPeek = () => {
@@ -448,6 +450,26 @@ export default function App() {
 
   // Opponents list (all non-human players)
   const opponents = gameState.players.filter(p => !p.isHuman);
+
+  // Distribute bots across the game board (Left, Top, Right) for all screen sizes
+  let leftOpponent: typeof opponents[0] | null = null;
+  let topOpponents: typeof opponents = [];
+  let rightOpponent: typeof opponents[0] | null = null;
+
+  if (opponents.length === 1) {
+    topOpponents = [opponents[0]];
+  } else if (opponents.length === 2) {
+    leftOpponent = opponents[0];
+    rightOpponent = opponents[1];
+  } else if (opponents.length === 3) {
+    leftOpponent = opponents[0];
+    topOpponents = [opponents[1]];
+    rightOpponent = opponents[2];
+  } else if (opponents.length >= 4) {
+    leftOpponent = opponents[0];
+    topOpponents = [opponents[1], opponents[2]];
+    rightOpponent = opponents[3];
+  }
 
   return (
     <div className={`flex flex-col min-h-screen theme-${settings.theme} bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)] overflow-x-hidden`}>
@@ -582,109 +604,71 @@ export default function App() {
           </div>
 
           {/* Dedicated Responsive Game Table Canvas with Dynamic Theme (Fullscreen fit) */}
-          <div className="felt-table relative w-full flex-1 rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-[var(--theme-table-border)] shadow-2xl p-2 sm:p-3 flex flex-col justify-between overflow-hidden">
+          <div className="felt-table relative w-full flex-1 rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-[var(--theme-table-border)] shadow-2xl p-1.5 sm:p-2.5 md:p-3 flex flex-col justify-between overflow-hidden">
             
-            {/* REGION A: TOP REGION — All Computer Opponents dynamically adapting with ZERO clipping */}
-            <div className="w-full shrink-0 pt-0.5 sm:pt-1">
-              {opponents.length === 1 && (
-                /* 1v1: Single opponent centered at top */
-                <div className="flex justify-center items-center py-1">
-                  <OpponentSeat
-                    player={opponents[0]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 1}
-                    position="top"
-                    lastActionText={opponentActionText[opponents[0].id]}
-                  />
+            {/* REGION A: TOP REGION — Top Computer Opponent(s) */}
+            {topOpponents.length > 0 && (
+              <div className="w-full shrink-0 pt-0.5 sm:pt-1">
+                <div className="flex items-center justify-center gap-4 sm:gap-8 mx-auto py-0.5">
+                  {topOpponents.map(bot => (
+                    <OpponentSeat
+                      key={bot.id}
+                      player={bot}
+                      isCurrentTurn={gameState.currentPlayerIndex === gameState.players.findIndex(p => p.id === bot.id)}
+                      position="top"
+                      compact={topOpponents.length > 1}
+                      lastActionText={opponentActionText[bot.id]}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {opponents.length === 2 && (
-                /* 1v2: Two opponents evenly spaced at top */
-                <div className="flex justify-around items-center w-full max-w-sm sm:max-w-md mx-auto py-1">
+            {/* REGION B: CENTRAL PLAY ARENA — Split Bots (Left, Right) and Center Table */}
+            <div className="flex-1 flex flex-row items-center justify-between w-full my-auto py-1 px-1 sm:px-3 gap-1 sm:gap-3">
+              {/* Left Opponent Column */}
+              <div className="flex items-center justify-center w-20 sm:w-28 md:w-32 shrink-0">
+                {leftOpponent ? (
                   <OpponentSeat
-                    player={opponents[0]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 1}
-                    position="topLeft"
-                    lastActionText={opponentActionText[opponents[0].id]}
+                    player={leftOpponent}
+                    isCurrentTurn={gameState.currentPlayerIndex === gameState.players.findIndex(p => p.id === leftOpponent.id)}
+                    position="left"
+                    compact
+                    lastActionText={opponentActionText[leftOpponent.id]}
                   />
-                  <OpponentSeat
-                    player={opponents[1]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 2}
-                    position="topRight"
-                    lastActionText={opponentActionText[opponents[1].id]}
-                  />
-                </div>
-              )}
+                ) : (
+                  <div className="w-1" />
+                )}
+              </div>
 
-              {opponents.length === 3 && (
-                /* 1v3: All three opponents arranged in a clean, unclipped 3-column row */
-                <div className="grid grid-cols-3 gap-1 sm:gap-4 w-full max-w-md sm:max-w-xl mx-auto py-1 items-start justify-items-center">
-                  <OpponentSeat
-                    player={opponents[0]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 1}
-                    compact
-                    lastActionText={opponentActionText[opponents[0].id]}
-                  />
-                  <OpponentSeat
-                    player={opponents[1]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 2}
-                    compact
-                    lastActionText={opponentActionText[opponents[1].id]}
-                  />
-                  <OpponentSeat
-                    player={opponents[2]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 3}
-                    compact
-                    lastActionText={opponentActionText[opponents[2].id]}
-                  />
-                </div>
-              )}
+              {/* Central Table: Draw Pile & Discard Pile (No top timer, direct tap to draw) */}
+              <div className="flex-1 flex items-center justify-center">
+                <CenterTable
+                  drawPileCount={gameState.drawPile.length}
+                  discardPile={gameState.discardPile}
+                  activeShape={gameState.activeShape}
+                  activeNumber={gameState.activeNumber}
+                  pendingPenalty={gameState.pendingPenalty}
+                  isHumanTurn={isHumanTurn}
+                  canHumanDraw={isHumanTurn}
+                  onDrawClick={handleHumanDraw}
+                />
+              </div>
 
-              {opponents.length === 4 && (
-                /* 1v4: All four opponents arranged in a clean, unclipped 4-column row */
-                <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full max-w-lg sm:max-w-2xl mx-auto py-1 items-start justify-items-center">
+              {/* Right Opponent Column */}
+              <div className="flex items-center justify-center w-20 sm:w-28 md:w-32 shrink-0">
+                {rightOpponent ? (
                   <OpponentSeat
-                    player={opponents[0]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 1}
+                    player={rightOpponent}
+                    isCurrentTurn={gameState.currentPlayerIndex === gameState.players.findIndex(p => p.id === rightOpponent.id)}
+                    position="right"
                     compact
-                    lastActionText={opponentActionText[opponents[0].id]}
+                    lastActionText={opponentActionText[rightOpponent.id]}
                   />
-                  <OpponentSeat
-                    player={opponents[1]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 2}
-                    compact
-                    lastActionText={opponentActionText[opponents[1].id]}
-                  />
-                  <OpponentSeat
-                    player={opponents[2]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 3}
-                    compact
-                    lastActionText={opponentActionText[opponents[2].id]}
-                  />
-                  <OpponentSeat
-                    player={opponents[3]}
-                    isCurrentTurn={gameState.currentPlayerIndex === 4}
-                    compact
-                    lastActionText={opponentActionText[opponents[3].id]}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* REGION B: CENTRAL PLAY ARENA — Market Draw Pile, Discard Pile & Match Status */}
-            <div className="flex-1 flex items-center justify-center w-full my-auto py-1 px-1 sm:px-4">
-              <CenterTable
-                drawPileCount={gameState.drawPile.length}
-                discardPile={gameState.discardPile}
-                activeShape={gameState.activeShape}
-                activeNumber={gameState.activeNumber}
-                pendingPenalty={gameState.pendingPenalty}
-                isHumanTurn={isHumanTurn}
-                canHumanDraw={isHumanTurn}
-                onDrawClick={handleHumanDraw}
-                statusMessage={turnBanner}
-                turnTimeRemaining={turnTimeRemaining}
-              />
+                ) : (
+                  <div className="w-1" />
+                )}
+              </div>
             </div>
 
             {/* REGION C: BOTTOM REGION — Human Player's Hand & Interactive Controls */}
@@ -704,6 +688,9 @@ export default function App() {
               />
             </div>
           </div>
+
+          {/* Forced Landscape Mode Prompt for Mobile Devices */}
+          <LandscapePrompt />
         </main>
       )}
 
