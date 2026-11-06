@@ -68,18 +68,8 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
       {/* Lobby Top Banner / Identity Section */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] rounded-3xl p-4 md:p-6 shadow-xl backdrop-blur-sm transition-colors duration-250">
         
-        {/* Left: Player Profile Badge & Welcome Back link */}
+        {/* Left: Player Profile Badge */}
         <div className="flex items-center gap-3.5 w-full md:w-auto">
-          {onBackToWelcome && (
-            <button
-              onClick={onBackToWelcome}
-              className="p-2 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-gold)] text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
-              title="Return to Home Screen"
-            >
-              <span>←</span>
-              <span className="hidden sm:inline">Home</span>
-            </button>
-          )}
 
           <div
             onClick={onOpenProfile || onOpenAvatarStudio}
@@ -277,11 +267,11 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
         )}
       </div>
 
-      {/* Lobby Navigation Hub (4 Clean Core Items) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      {/* Lobby Navigation Hub (3 Clean Core Items) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
           onClick={onOpenProfile || onOpenAvatarStudio}
-          className="p-3 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+          className="p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
         >
           <span className="text-xl mb-1 block">👤</span>
           <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">
@@ -294,7 +284,7 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
 
         <button
           onClick={onOpenMultiplayer}
-          className="p-3 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+          className="p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
         >
           <div className="flex items-center justify-between mb-1">
             <span className="text-xl">🌐</span>
@@ -311,21 +301,8 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
         </button>
 
         <button
-          onClick={onOpenHowToPlay}
-          className="p-3 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
-        >
-          <span className="text-xl mb-1 block">📖</span>
-          <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">
-            Rules & Deck Guide
-          </span>
-          <span className="text-[10px] text-[var(--theme-text-muted)]">
-            Special cards breakdown
-          </span>
-        </button>
-
-        <button
           onClick={onOpenSettings}
-          className="p-3 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+          className="p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
         >
           <span className="text-xl mb-1 block">⚙️</span>
           <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">

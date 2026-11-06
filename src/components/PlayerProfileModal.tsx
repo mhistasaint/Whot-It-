@@ -127,7 +127,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
               }`}
             >
-              👤 Profile & Identity
+              Profile
             </button>
             <button
               onClick={() => setActiveTab('stats')}
@@ -137,7 +137,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
               }`}
             >
-              📊 Game Records ({stats.matchesPlayed})
+              Records
             </button>
             <button
               onClick={() => setActiveTab('multiplayer')}
@@ -147,7 +147,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)]'
               }`}
             >
-              🌐 Online ID (Preview)
+              Online ID
             </button>
           </div>
         )}

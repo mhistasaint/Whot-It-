@@ -128,8 +128,8 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
             return (
               <div
                 key={card.id}
-                className={`transform transition-all duration-200 shrink-0 ${
-                  isSelected ? 'z-30 -translate-y-3.5 scale-105' : 'hover:z-20 hover:-translate-y-1'
+                className={`transform transition-all duration-200 shrink-0 animate-card-draw ${
+                  isSelected ? 'z-30 -translate-y-3.5 scale-105' : 'hover:z-20 hover:-translate-y-1 active:scale-95'
                 }`}
                 style={{
                   zIndex: isSelected ? 30 : index + 1,

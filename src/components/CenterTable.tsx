@@ -132,8 +132,11 @@ export const CenterTable: React.FC<CenterTableProps> = ({
                 <CardView card={previousCard} size="table" />
               </div>
             )}
-            {/* Top active card */}
-            <div className="transform rotate-1 transition-transform">
+            {/* Top active card with fluid play transition animation */}
+            <div
+              key={topCard ? topCard.id : 'empty'}
+              className="transform rotate-1 transition-transform animate-card-play"
+            >
               <CardView card={topCard} size="table" />
             </div>
           </div>

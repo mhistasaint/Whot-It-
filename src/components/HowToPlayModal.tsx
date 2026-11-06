@@ -122,6 +122,77 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
               Every player gets <strong>1 Free Peek per calendar day</strong>, after which peeks cost 100 gems with explicit confirmation.
             </p>
           </div>
+
+          {/* Player Level, Tier & XP Calculation */}
+          <div className="bg-[var(--theme-bg-main)] p-4 rounded-xl border border-[var(--theme-gold)]/40 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🏆</span>
+              <h3 className="font-display font-black text-sm text-[var(--theme-gold)]">
+                Player Level, Rank Tiers & XP Calculation
+              </h3>
+            </div>
+            <p className="text-xs text-[var(--theme-text-muted)]">
+              Your profile rank, level, and tier progress dynamically with every match and tactical decision at the WHOT table:
+            </p>
+
+            {/* XP Scoring Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+              <div className="p-2 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)]">
+                <span className="text-[var(--theme-accent)] font-bold block">+120 XP</span>
+                <span className="text-[var(--theme-text-muted)]">Match Victory</span>
+              </div>
+              <div className="p-2 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)]">
+                <span className="text-[var(--theme-accent)] font-bold block">+30 XP</span>
+                <span className="text-[var(--theme-text-muted)]">Match Completed</span>
+              </div>
+              <div className="p-2 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)]">
+                <span className="text-[var(--theme-accent)] font-bold block">+5 XP</span>
+                <span className="text-[var(--theme-text-muted)]">Per Card Played</span>
+              </div>
+              <div className="p-2 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)]">
+                <span className="text-[var(--theme-accent)] font-bold block">+15 XP</span>
+                <span className="text-[var(--theme-text-muted)]">WHOT 20 Played</span>
+              </div>
+              <div className="p-2 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)]">
+                <span className="text-[var(--theme-accent)] font-bold block">+25 XP</span>
+                <span className="text-[var(--theme-text-muted)]">Penalty Defended/Stacked</span>
+              </div>
+              <div className="p-2 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border)]">
+                <span className="text-[var(--theme-accent)] font-bold block">+20 XP</span>
+                <span className="text-[var(--theme-text-muted)]">General Market Called</span>
+              </div>
+            </div>
+
+            {/* Level & Rank Tiers Breakdown */}
+            <div className="pt-2 border-t border-[var(--theme-border)] text-[11px] space-y-1.5">
+              <div className="flex justify-between items-center">
+                <strong className="text-[var(--theme-text-primary)]">Level Milestones:</strong>
+                <span className="text-[var(--theme-accent)] font-mono">250 XP per Level</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                <div className="flex items-center gap-2 p-1.5 rounded-md bg-[var(--theme-bg-surface)]/70">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#CD7F32]" />
+                  <span><strong>Bronze:</strong> Level 1 – 2</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded-md bg-[var(--theme-bg-surface)]/70">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#C0C0C0]" />
+                  <span><strong>Silver:</strong> Level 3 – 5</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded-md bg-[var(--theme-bg-surface)]/70">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700]" />
+                  <span><strong>Gold:</strong> Level 6 – 9</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded-md bg-[var(--theme-bg-surface)]/70">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8]" />
+                  <span><strong>Diamond:</strong> Level 10 – 14</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded-md bg-[var(--theme-bg-surface)]/70 sm:col-span-2 text-[var(--theme-gold)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[var(--theme-gold)]" />
+                  <span><strong>Naija Champion:</strong> Level 15+ (Master of the Table)</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 pt-3 border-t border-[var(--theme-border)] text-right">

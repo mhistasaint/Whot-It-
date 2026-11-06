@@ -40,6 +40,7 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { AvatarCustomizerModal } from './components/AvatarCustomizerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { MultiplayerModal } from './components/MultiplayerModal';
+import { Home, Pause, Play, Settings, Sparkles } from 'lucide-react';
 
 export default function App() {
   // Settings & Persistent State
@@ -79,6 +80,9 @@ export default function App() {
   // WHOT 20 staging and card selection state
   const [stagedWhotCardId, setStagedWhotCardId] = useState<string | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+
+  // In-Game Pause State
+  const [isGamePaused, setIsGamePaused] = useState(false);
 
   // Bot activity indicators
   const [opponentActionText, setOpponentActionText] = useState<{ [playerId: string]: string | null }>({});
@@ -152,6 +156,7 @@ export default function App() {
       'PLAYING'
     );
     setGameState(fresh);
+    setIsGamePaused(false);
     setCurrentScreen('MATCH');
     setOpponentActionText({});
     soundService.playCardPlay();
@@ -176,7 +181,7 @@ export default function App() {
 
   // Automated Bot Turn Executor
   useEffect(() => {
-    if (gameState.status !== 'PLAYING' || currentScreen !== 'MATCH') return;
+    if (gameState.status !== 'PLAYING' || currentScreen !== 'MATCH' || isGamePaused) return;
 
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     if (currentPlayer.isHuman) return;
@@ -348,7 +353,7 @@ export default function App() {
 
   // Reset and run 15-second countdown on human turn
   useEffect(() => {
-    if (!isHumanTurn || isAnyModalOpen) {
+    if (!isHumanTurn || isAnyModalOpen || isGamePaused) {
       if (!isHumanTurn) {
         setTurnTimeRemaining(15);
       }
@@ -446,8 +451,8 @@ export default function App() {
 
   return (
     <div className={`flex flex-col min-h-screen theme-${settings.theme} bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)] overflow-x-hidden`}>
-      {/* Top Bar Navigation (hidden on dedicated Welcome Screen) */}
-      {currentScreen !== 'WELCOME' && (
+      {/* Top Bar Navigation (shown only on Gameplay Lobby, hidden in fullscreen match & welcome) */}
+      {currentScreen === 'HOME' && (
         <Navbar
           gems={gems}
           soundEnabled={settings.soundEnabled}
@@ -469,7 +474,7 @@ export default function App() {
           isDailyFreePeek={isDailyFreePeekReady}
           onTriggerPeek={handleOpenPeek}
           canPeek={gameState.status === 'PLAYING'}
-          isInGame={currentScreen === 'MATCH'}
+          isInGame={false}
         />
       )}
 
@@ -514,11 +519,70 @@ export default function App() {
         />
       )}
 
-      {/* Screen 3: Live Gameplay Arena Table */}
+      {/* Screen 3: Fullscreen Live Gameplay Arena Table (No Navbar, Minimal In-Game Bar: Home, Pause, Settings) */}
       {currentScreen === 'MATCH' && (
-        <main className="flex-1 flex flex-col justify-between max-w-6xl w-full mx-auto p-1 sm:p-3 animate-fade-in">
-          {/* Dedicated Responsive Game Table Canvas with Dynamic Theme */}
-          <div className="felt-table relative w-full rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-[var(--theme-table-border)] shadow-2xl p-2 sm:p-4 flex flex-col justify-between h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-4.5rem)] max-h-[860px] min-h-[500px] overflow-hidden">
+        <main className="flex-1 flex flex-col justify-between w-full h-[100dvh] max-h-[100dvh] p-1 sm:p-2.5 animate-fade-in select-none">
+          {/* Fullscreen Minimal In-Game Top Bar: Home, Pause, Settings */}
+          <div className="flex items-center justify-between px-2.5 sm:px-4 py-1.5 bg-[var(--theme-bg-surface)]/85 backdrop-blur-md rounded-xl border border-[var(--theme-border)]/50 shrink-0 mb-1 z-20 shadow-md">
+            {/* Left: Home Button */}
+            <button
+              onClick={() => {
+                if (botTimeoutRef.current) clearTimeout(botTimeoutRef.current);
+                setCurrentScreen('WELCOME');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] hover:text-[var(--theme-gold)] text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+              title="Return to Home"
+            >
+              <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--theme-gold)]" />
+              <span>Home</span>
+            </button>
+
+            {/* Center: Match Mode Title & Peek shortcut */}
+            <div className="flex items-center gap-2">
+              <span className="font-display font-black text-xs sm:text-sm text-[var(--theme-text-primary)]">
+                WHOT <span className="text-[var(--theme-gold)]">It!</span>
+              </span>
+              <span className="text-[10px] uppercase font-bold text-[var(--theme-accent)] bg-[var(--theme-bg-main)] px-2 py-0.5 rounded-full border border-[var(--theme-border)] hidden sm:inline">
+                {settings.selectedMode} · {settings.difficulty}
+              </span>
+              <button
+                onClick={handleOpenPeek}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--theme-bg-main)] border border-[var(--theme-accent)]/50 text-[11px] font-bold text-[var(--theme-accent)] hover:bg-[var(--theme-bg-elevated)] transition-colors cursor-pointer"
+                title="Peek next bot move"
+              >
+                <Sparkles className="w-3 h-3 text-[var(--theme-accent)]" />
+                <span className="hidden sm:inline">Peek</span>
+                <span className="text-[9px] font-mono">{isDailyFreePeekReady ? 'FREE' : '100💎'}</span>
+              </button>
+            </div>
+
+            {/* Right: Pause & Settings Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsGamePaused(prev => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 ${
+                  isGamePaused
+                    ? 'bg-[var(--theme-gold)] text-[var(--theme-accent-text)] border-[var(--theme-gold)] animate-pulse'
+                    : 'bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)]'
+                }`}
+                title={isGamePaused ? 'Resume Match' : 'Pause Match'}
+              >
+                {isGamePaused ? <Play className="w-3.5 h-3.5 fill-current" /> : <Pause className="w-3.5 h-3.5 fill-current" />}
+                <span>{isGamePaused ? 'Resume' : 'Pause'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-1.5 rounded-lg bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] transition-all cursor-pointer shadow-sm active:scale-95"
+                title="Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Dedicated Responsive Game Table Canvas with Dynamic Theme (Fullscreen fit) */}
+          <div className="felt-table relative w-full flex-1 rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-[var(--theme-table-border)] shadow-2xl p-2 sm:p-3 flex flex-col justify-between overflow-hidden">
             
             {/* REGION A: TOP REGION — All Computer Opponents dynamically adapting with ZERO clipping */}
             <div className="w-full shrink-0 pt-0.5 sm:pt-1">
@@ -640,11 +704,6 @@ export default function App() {
               />
             </div>
           </div>
-
-          {/* Live Match Feed below the table (collapsible on mobile) */}
-          <div className="mt-1 sm:mt-2 shrink-0">
-            <GameLogView logs={gameState.log} />
-          </div>
         </main>
       )}
 
@@ -743,6 +802,56 @@ export default function App() {
         isCreationMode={isProfileCreationMode}
       />
 
+
+      {/* In-Game Pause Modal Overlay */}
+      {isGamePaused && currentScreen === 'MATCH' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none text-[var(--theme-text-primary)]">
+          <div className="w-full max-w-sm bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-6 text-center">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-[var(--theme-bg-main)] border border-[var(--theme-gold)]/50 flex items-center justify-center mb-3 text-2xl text-[var(--theme-gold)] shadow-inner">
+              ⏸️
+            </div>
+            <h3 className="font-display font-black text-2xl text-[var(--theme-text-primary)] mb-1">
+              Match Paused
+            </h3>
+            <p className="text-xs text-[var(--theme-text-muted)] mb-5">
+              Turn countdown and bot moves are suspended
+            </p>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => setIsGamePaused(false)}
+                className="w-full py-3 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-black text-xs shadow-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>Resume Game</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsGamePaused(false);
+                  handleStartMatch();
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer"
+              >
+                Deal New Match
+              </button>
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer"
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => {
+                  setIsGamePaused(false);
+                  setCurrentScreen('WELCOME');
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-red-500/40 hover:border-red-500 text-red-300 font-display font-bold text-xs transition-all cursor-pointer"
+              >
+                Exit to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Match Result Modal */}
       <MatchResultModal

@@ -157,3 +157,56 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Card Play & Draw Fluid Animations */
+@keyframes cardPlayPop {
+  0% {
+    opacity: 0.4;
+    transform: translateY(24px) scale(0.9) rotate(-3deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.04) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes cardDrawFly {
+  0% {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.85);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(3px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cardPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(215, 180, 90, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(215, 180, 90, 0.7);
+  }
+}
+
+.animate-card-play {
+  animation: cardPlayPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-card-draw {
+  animation: cardDrawFly 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-card-glow {
+  animation: cardPulseGlow 1.8s ease-in-out infinite;
+}
+

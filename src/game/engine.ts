@@ -103,6 +103,18 @@ export function drawNCards(
     drawnCards.push(card);
   }
 
+  // IMMEDIATELY RESTACK: As soon as market hits 0, restack all discard cards except top card
+  // Market count = 54 - cards players holding - 1 (last played top card)
+  if (currentDraw.length === 0 && currentDiscard.length > 1) {
+    const immediateRecycle = recycleMarketPile(currentDraw, currentDiscard);
+    if (immediateRecycle.recycledCount > 0) {
+      currentDraw = immediateRecycle.drawPile;
+      currentDiscard = immediateRecycle.discardPile;
+      wasRecycled = true;
+      totalRecycled += immediateRecycle.recycledCount;
+    }
+  }
+
   return {
     drawnCards,
     newDrawPile: currentDraw,
