@@ -163,6 +163,21 @@ export default function App() {
     soundService.playCardPlay();
   }, [settings.selectedMode, settings.difficulty, userProfile.username, userProfile.avatar, settings.playerName, settings.avatar]);
 
+  // Return to Main Home Screen from match, pause, or match result modal
+  const handleReturnToHome = useCallback(() => {
+    if (botTimeoutRef.current) {
+      clearTimeout(botTimeoutRef.current);
+      botTimeoutRef.current = null;
+    }
+    setIsGamePaused(false);
+    setGameState(prev => ({
+      ...prev,
+      status: 'LOBBY',
+      winner: null,
+    }));
+    setCurrentScreen('HOME');
+  }, []);
+
   // Handle match conclusion statistics
   useEffect(() => {
     if (gameState.status === 'GAME_OVER' && gameState.winner) {
@@ -548,10 +563,7 @@ export default function App() {
           <div className="flex items-center justify-between px-2.5 sm:px-4 py-1.5 bg-[var(--theme-bg-surface)]/85 backdrop-blur-md rounded-xl border border-[var(--theme-border)]/50 shrink-0 mb-1 z-20 shadow-md">
             {/* Left: Home Button */}
             <button
-              onClick={() => {
-                if (botTimeoutRef.current) clearTimeout(botTimeoutRef.current);
-                setCurrentScreen('WELCOME');
-              }}
+              onClick={handleReturnToHome}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] hover:text-[var(--theme-gold)] text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
               title="Return to Home"
             >
@@ -827,10 +839,7 @@ export default function App() {
                 Settings
               </button>
               <button
-                onClick={() => {
-                  setIsGamePaused(false);
-                  setCurrentScreen('WELCOME');
-                }}
+                onClick={handleReturnToHome}
                 className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-red-500/40 hover:border-red-500 text-red-300 font-display font-bold text-xs transition-all cursor-pointer"
               >
                 Exit to Home
@@ -842,13 +851,13 @@ export default function App() {
 
       {/* Match Result Modal */}
       <MatchResultModal
-        isOpen={gameState.status === 'GAME_OVER'}
+        isOpen={currentScreen === 'MATCH' && gameState.status === 'GAME_OVER'}
         winner={gameState.winner}
         players={gameState.players}
         turnCount={gameState.turnCount}
         onNewMatch={handleStartMatch}
-        onReturnHome={() => setCurrentScreen('WELCOME')}
-        onReturnToLobby={() => setCurrentScreen('WELCOME')}
+        onReturnHome={handleReturnToHome}
+        onReturnToLobby={handleReturnToHome}
       />
     </div>
   );
