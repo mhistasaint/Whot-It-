@@ -279,28 +279,4 @@
   animation: victoryShimmer 3s linear infinite;
 }
 
-/* Hardcoded Mobile Landscape: Automatically rotate and lock view into landscape on mobile devices */
-@media screen and (orientation: portrait) and (max-width: 900px) {
-  html, body {
-    overflow: hidden !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  .force-mobile-landscape {
-    position: fixed !important;
-    top: 0 !important;
-    left: 100vw !important;
-    width: 100dvh !important;
-    height: 100dvw !important;
-    transform: rotate(90deg) !important;
-    transform-origin: 0 0 !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-}
-
 
