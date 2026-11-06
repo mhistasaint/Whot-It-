@@ -830,7 +830,7 @@ export default function App() {
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer"
               >
-                Deal New Match
+                Start Over
               </button>
               <button
                 onClick={() => setIsSettingsOpen(true)}
