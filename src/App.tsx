@@ -40,7 +40,6 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { AvatarCustomizerModal } from './components/AvatarCustomizerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { MultiplayerModal } from './components/MultiplayerModal';
-import { LandscapePrompt } from './components/LandscapePrompt';
 import { Home, Pause, Play, Settings, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -99,6 +98,16 @@ export default function App() {
   useEffect(() => {
     document.body.className = `theme-${settings.theme} antialiased`;
   }, [settings.theme]);
+
+  // Attempt device orientation lock to landscape if supported
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'screen' in window && 'orientation' in window.screen) {
+      const orientation = window.screen.orientation as ScreenOrientation & { lock?: (type: string) => Promise<void> };
+      if (typeof orientation.lock === 'function') {
+        orientation.lock('landscape').catch(() => {});
+      }
+    }
+  }, []);
 
   const handleUpdateSettings = (newSettings: Partial<PlayerSettings>) => {
     const updated = savePlayerSettings(newSettings);
@@ -487,7 +496,7 @@ export default function App() {
   }
 
   return (
-    <div className={`flex flex-col min-h-screen theme-${settings.theme} bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)] overflow-x-hidden`}>
+    <div className={`flex flex-col min-h-screen force-mobile-landscape theme-${settings.theme} bg-[var(--theme-bg-main)] text-[var(--theme-text-primary)] overflow-x-hidden`}>
       {/* Top Bar Navigation (shown only on Gameplay Lobby, hidden in fullscreen match & welcome) */}
       {currentScreen === 'HOME' && (
         <Navbar
@@ -558,7 +567,7 @@ export default function App() {
 
       {/* Screen 3: Fullscreen Live Gameplay Arena Table (No Navbar, Minimal In-Game Bar: Home, Pause, Settings) */}
       {currentScreen === 'MATCH' && (
-        <main className="flex-1 flex flex-col justify-between w-full h-[100dvh] max-h-[100dvh] p-1 sm:p-2.5 animate-fade-in select-none">
+        <main className="flex-1 flex flex-col justify-between w-full h-full min-h-[100%] max-h-screen p-1 sm:p-2.5 animate-fade-in select-none">
           {/* Fullscreen Minimal In-Game Top Bar: Home, Pause, Settings */}
           <div className="flex items-center justify-between px-2.5 sm:px-4 py-1.5 bg-[var(--theme-bg-surface)]/85 backdrop-blur-md rounded-xl border border-[var(--theme-border)]/50 shrink-0 mb-1 z-20 shadow-md">
             {/* Left: Home Button */}
@@ -700,9 +709,6 @@ export default function App() {
               />
             </div>
           </div>
-
-          {/* Forced Landscape Mode Prompt for Mobile Devices */}
-          <LandscapePrompt />
         </main>
       )}
 
@@ -809,12 +815,9 @@ export default function App() {
             <div className="w-14 h-14 mx-auto rounded-2xl bg-[var(--theme-bg-main)] border border-[var(--theme-gold)]/50 flex items-center justify-center mb-3 text-2xl text-[var(--theme-gold)] shadow-inner">
               ⏸️
             </div>
-            <h3 className="font-display font-black text-2xl text-[var(--theme-text-primary)] mb-1">
+            <h3 className="font-display font-black text-2xl text-[var(--theme-text-primary)] mb-5">
               Match Paused
             </h3>
-            <p className="text-xs text-[var(--theme-text-muted)] mb-5">
-              Turn countdown and bot moves are suspended
-            </p>
             <div className="space-y-2.5">
               <button
                 onClick={() => setIsGamePaused(false)}
