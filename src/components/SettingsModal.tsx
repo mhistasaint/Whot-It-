@@ -65,7 +65,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
       <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-4 sm:p-5 text-[var(--theme-text-primary)] max-h-[92dvh] overflow-y-auto">
         
         {/* Header */}
@@ -78,9 +78,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-xs text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] p-1.5"
+            className="w-8 h-8 rounded-full bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-red-500/40 text-[var(--theme-text-muted)] hover:text-red-400 flex items-center justify-center text-sm font-bold cursor-pointer transition-all active:scale-95"
+            aria-label="Close"
           >
-            ✕ Close
+            ✕
           </button>
         </div>
 
@@ -212,33 +213,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 6 Visual Themes */}
+          {/* Select Theme */}
           <div>
             <span className="text-[11px] font-bold text-[var(--theme-gold)] uppercase tracking-wider block mb-2">
-              Application Visual Theme (6 Styles)
+              Select Theme
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {THEMES.map(th => (
-                <button
-                  key={th.id}
-                  onClick={() => onUpdateSettings({ theme: th.id })}
-                  className={`p-2.5 rounded-xl border flex items-center gap-3 transition-all text-left ${
-                    settings.theme === th.id
-                      ? 'border-[var(--theme-gold)] bg-[var(--theme-bg-elevated)] ring-2 ring-[var(--theme-gold)] shadow-md'
-                      : 'border-[var(--theme-border)] bg-[var(--theme-bg-main)] hover:border-[var(--theme-gold)]'
-                  }`}
-                >
-                  <div className={`w-6 h-6 rounded-full border-2 ${th.preview} shrink-0 shadow-inner`} />
-                  <div>
-                    <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] block">
-                      {th.name}
-                    </span>
-                    <span className="text-[10px] text-[var(--theme-text-muted)] leading-tight block">
-                      {th.description}
-                    </span>
-                  </div>
-                </button>
-              ))}
+            <div className="flex items-center justify-between gap-2 p-3 sm:p-4 rounded-2xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)]">
+              {THEMES.map(th => {
+                const isSelected = settings.theme === th.id;
+                return (
+                  <button
+                    key={th.id}
+                    type="button"
+                    onClick={() => onUpdateSettings({ theme: th.id })}
+                    className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 sm:border-3 ${th.preview} transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-md ${
+                      isSelected
+                        ? 'ring-3 sm:ring-4 ring-[var(--theme-gold)] ring-offset-2 ring-offset-[var(--theme-bg-surface)] scale-110 shadow-lg'
+                        : 'opacity-70 hover:opacity-100 hover:scale-105 active:scale-95'
+                    }`}
+                    title={th.name}
+                    aria-label={`Select ${th.name} theme`}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -249,9 +246,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 onClose();
                 onOpenAvatarStudio();
               }}
-              className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] text-xs font-bold text-[var(--theme-gold)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] text-xs font-bold text-[var(--theme-gold)] transition-all flex items-center justify-center cursor-pointer"
             >
-              <span>🎭</span> Open Avatar & Profile Customizer
+              Customize Player
             </button>
           </div>
         </div>
@@ -262,7 +259,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onClick={onClose}
             className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] font-display font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
           >
-            Apply & Close
+            Save Settings
           </button>
         </div>
       </div>

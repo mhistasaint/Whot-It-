@@ -23,9 +23,10 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats }
           </h2>
           <button
             onClick={onClose}
-            className="text-xs text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] p-1.5 cursor-pointer"
+            className="w-8 h-8 rounded-full bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-red-500/40 text-[var(--theme-text-muted)] hover:text-red-400 flex items-center justify-center text-sm font-bold cursor-pointer transition-all active:scale-95"
+            aria-label="Close"
           >
-            ✕ Close
+            ✕
           </button>
         </div>
 
@@ -85,12 +86,14 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats }
           </div>
         </div>
 
-        <div className="mt-5 text-right">
+        <div className="mt-5 flex justify-end">
           <button
             onClick={onClose}
-            className="w-full py-2.5 px-4 rounded-lg bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-accent-text)] text-xs font-bold transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-sm font-bold text-[var(--theme-text-muted)] hover:text-red-400 hover:border-red-500/40 flex items-center justify-center cursor-pointer transition-all active:scale-95"
+            aria-label="Close"
+            title="Close"
           >
-            Close
+            ✕
           </button>
         </div>
       </div>

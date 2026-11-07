@@ -28,7 +28,18 @@ export const DailyRewardModal: React.FC<DailyRewardModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-4 sm:p-6 text-center text-[var(--theme-text-primary)]">
+      <div className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-4 sm:p-6 text-center text-[var(--theme-text-primary)]">
+        {/* Top-Right 'X' Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--theme-bg-main)] hover:bg-red-500/20 hover:text-red-400 border border-[var(--theme-border)] hover:border-red-500/50 text-[var(--theme-text-muted)] transition-all cursor-pointer flex items-center justify-center font-bold text-sm active:scale-95"
+          aria-label="Close"
+          title="Close"
+        >
+          ✕
+        </button>
+
         {/* Gift Icon */}
         <div className="w-14 h-14 mx-auto rounded-full bg-[var(--theme-accent)]/20 border border-[var(--theme-accent)] flex items-center justify-center mb-2 text-2xl">
           🎁
@@ -86,10 +97,13 @@ export const DailyRewardModal: React.FC<DailyRewardModalProps> = ({
 
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-xs font-semibold text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-elevated)] transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-sm font-bold text-[var(--theme-text-muted)] hover:text-red-400 hover:border-red-500/40 flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0"
+            aria-label="Close"
+            title="Close"
           >
-            Close
+            ✕
           </button>
 
           {rewardState.canClaimToday ? (

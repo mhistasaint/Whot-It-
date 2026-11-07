@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GameMode, BotDifficulty, PlayerAvatar, UserProfile } from '../game/types';
 import { AvatarView } from './AvatarView';
+import { User, Globe, Settings } from 'lucide-react';
 
 interface WelcomeLobbyProps {
   playerName: string;
@@ -64,86 +65,47 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
   const activeModeObj = MODES.find(m => m.id === (selectedModeStage || selectedMode));
   return (
     <div
-      className="w-full max-w-5xl mx-auto px-3 sm:px-4 py-2 sm:py-4 md:py-6 flex flex-col justify-between min-h-[85vh] select-none animate-fade-in text-[var(--theme-text-primary)]"
+      className="w-full max-w-5xl mx-auto px-3 sm:px-4 py-2 sm:py-4 flex flex-col gap-3 sm:gap-4 pb-20 select-none animate-fade-in text-[var(--theme-text-primary)]"
       style={{
         paddingLeft: 'max(0.75rem, env(safe-area-inset-left))',
         paddingRight: 'max(0.75rem, env(safe-area-inset-right))',
         paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
-        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+        paddingBottom: 'max(3.5rem, env(safe-area-inset-bottom))',
       }}
     >
-      
-      {/* Lobby Top Banner / Identity Section */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] rounded-3xl p-4 md:p-6 shadow-xl backdrop-blur-sm transition-colors duration-250">
-        
-        {/* Left: Player Profile Badge */}
-        <div className="flex items-center gap-3.5 w-full md:w-auto">
-
-          <div
-            onClick={onOpenProfile || onOpenAvatarStudio}
-            className="cursor-pointer relative group shrink-0"
-            title="Click to view/edit profile"
-          >
-            <AvatarView avatar={avatar} name={playerName} size="lg" />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2
-                onClick={onOpenProfile || onOpenAvatarStudio}
-                className="font-display font-extrabold text-lg md:text-xl text-[var(--theme-text-primary)] tracking-tight hover:text-[var(--theme-gold)] transition-colors cursor-pointer"
-              >
-                {playerName}
-              </h2>
-              <span className="text-[10px] uppercase font-bold text-[var(--theme-gold)] px-2 py-0.5 rounded-full bg-[var(--theme-gold)]/15 border border-[var(--theme-gold)]/30">
-                {userProfile?.title || 'Challenger'}
-              </span>
-              {userProfile && (
-                <span className="text-[10px] font-bold text-[var(--theme-accent)] bg-[var(--theme-bg-main)] px-2 py-0.5 rounded-full border border-[var(--theme-border)]">
-                  Lvl {userProfile.level} · {userProfile.rankTier}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-[var(--theme-text-muted)] mt-0.5">
-              {userProfile?.bio ? `"${userProfile.bio}"` : 'Welcome to the WHOT table!'}
-            </p>
-          </div>
+      {/* Lobby Top Banner: Player Identity Card */}
+      <div
+        onClick={onOpenProfile || onOpenAvatarStudio}
+        className="flex items-center gap-3.5 sm:gap-4.5 bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-xl backdrop-blur-sm transition-all cursor-pointer hover:border-[var(--theme-gold)] group"
+        title="View & Edit Player Profile"
+      >
+        <div className="shrink-0 relative">
+          <AvatarView avatar={avatar} name={playerName} size="lg" />
         </div>
 
-        {/* Right: Quick Action Chips */}
-        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-end flex-wrap">
-          {/* Daily Reward Badge */}
-          <button
-            onClick={onOpenDailyBonus}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer ${
-              canClaimDailyReward
-                ? 'bg-[var(--theme-gold)] text-[var(--theme-accent-text)] border-[var(--theme-gold)] shadow-md animate-bounce'
-                : 'bg-[var(--theme-bg-main)] text-[var(--theme-text-muted)] border-[var(--theme-border)]'
-            }`}
-          >
-            <span>🎁</span>
-            <span>Daily Bonus</span>
-            {canClaimDailyReward && <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />}
-          </button>
-
-          {/* Daily Free Peek Status */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-xs">
-            <span className="text-[var(--theme-gold)]">👁️</span>
-            <span className="text-[11px] text-[var(--theme-text-muted)]">Daily Peek:</span>
-            <span className="font-bold text-[var(--theme-accent)]">
-              {canUseFreePeek ? 'Ready' : 'Used'}
+        <div className="flex-1 min-w-0">
+          {/* Bold Player Name Heading & Level Beside It */}
+          <div className="flex items-center gap-2.5 flex-wrap mb-1">
+            <h2 className="font-display font-black text-xl sm:text-2xl text-[var(--theme-text-primary)] tracking-tight group-hover:text-[var(--theme-gold)] transition-colors truncate">
+              {playerName}
+            </h2>
+            <span className="text-[10px] sm:text-[11px] font-bold text-[var(--theme-text-primary)] bg-[var(--theme-bg-main)] px-2.5 py-0.5 rounded-md border border-[var(--theme-border)] shrink-0 whitespace-nowrap shadow-sm">
+              Lvl {userProfile?.level ?? 1} · {userProfile?.rankTier || 'Bronze'}
             </span>
           </div>
 
-          {/* Gem Balance */}
-          <button
-            onClick={onOpenGemShop}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-gold)]/40 hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] text-xs font-bold transition-all shadow-sm cursor-pointer"
-          >
-            <span>💎</span>
-            <span className="font-mono text-[var(--theme-gold)]">{gems}</span>
-            <span className="text-[var(--theme-accent)] text-[10px] bg-[var(--theme-bg-elevated)] px-1 rounded font-bold">+</span>
-          </button>
+          {/* Player Tag Under Username */}
+          <div className="flex items-center gap-2 mb-1.5">
+            {/* Solid colour rectangle tag based on selected theme */}
+            <span className="text-[10px] sm:text-[11px] uppercase font-black text-[var(--theme-accent-text)] px-2.5 py-0.5 rounded-md bg-[var(--theme-accent)] shadow-sm shrink-0 tracking-wider whitespace-nowrap">
+              {userProfile?.title || 'Naija Challenger'}
+            </span>
+          </div>
+
+          {/* Bio Quote - Displays fully without truncation */}
+          <p className="text-xs sm:text-sm text-[var(--theme-text-muted)] italic leading-relaxed break-words">
+            {userProfile?.bio ? `"${userProfile.bio}"` : '"Never go to market twice! Always holding WHOT 20."'}
+          </p>
         </div>
       </div>
 
@@ -163,7 +125,7 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
               {MODES.map(mode => (
                 <button
                   key={mode.id}
@@ -171,58 +133,47 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
                     onSelectMode(mode.id);
                     setSelectedModeStage(mode.id);
                   }}
-                  className="p-3 sm:p-4 rounded-2xl border border-[var(--theme-border)]/70 bg-[var(--theme-bg-main)]/60 hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] text-left transition-all cursor-pointer group hover:scale-[1.01] active:scale-95 shadow-sm"
+                  className="p-3.5 sm:p-4 rounded-2xl border border-[var(--theme-border)]/70 bg-[var(--theme-bg-main)]/60 hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] text-left transition-all cursor-pointer group hover:scale-[1.01] active:scale-95 shadow-sm"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl">{mode.icon}</span>
-                    <span className="text-xs font-bold text-[var(--theme-gold)] px-2 py-0.5 rounded-full bg-[var(--theme-gold)]/10 border border-[var(--theme-gold)]/20">
-                      {mode.opponents} Bot{mode.opponents > 1 ? 's' : ''}
-                    </span>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xl sm:text-2xl shrink-0 leading-none">{mode.icon}</span>
+                    <h4 className="font-display font-black text-sm sm:text-base text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] transition-colors truncate">
+                      {mode.name}
+                    </h4>
                   </div>
-                  <h4 className="font-display font-extrabold text-base text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] transition-colors">
-                    {mode.name}
-                  </h4>
-                  <p className="text-xs text-[var(--theme-text-muted)] mt-1 leading-snug">
+                  <p className="text-xs text-[var(--theme-text-muted)] leading-snug">
                     {mode.desc}
                   </p>
-                  <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-[var(--theme-gold)]">
-                    <span>Select Mode</span>
-                    <span>→</span>
-                  </div>
                 </button>
               ))}
             </div>
           </div>
         ) : (
           /* Stage 2: Selected Mode Header with Cancel, Difficulty, and Play Button */
-          <div className="space-y-6">
-            {/* Mode Banner & Cancel Option */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)]">
+          <div className="space-y-5">
+            {/* Direct Mode Header on Card Pop-up: Mode Title, Opponents Under It, Icon, and "X" Cancel Button */}
+            <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-3">
-                <span className="text-3xl">{activeModeObj?.icon || '👑'}</span>
+                <span className="text-3xl sm:text-4xl">{activeModeObj?.icon || '👑'}</span>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--theme-gold)] bg-[var(--theme-gold)]/15 px-2 py-0.5 rounded-full">
-                      Selected Mode
-                    </span>
-                    <span className="text-xs text-[var(--theme-text-muted)]">
-                      {activeModeObj?.opponents} Computer Opponent{activeModeObj && activeModeObj.opponents > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <h3 className="font-display font-black text-lg text-[var(--theme-text-primary)] mt-0.5">
+                  <h3 className="font-display font-black text-lg sm:text-xl text-[var(--theme-text-primary)]">
                     {activeModeObj?.name}
                   </h3>
+                  <p className="text-xs sm:text-sm text-[var(--theme-text-muted)] font-medium">
+                    {activeModeObj?.opponents} Computer Opponent{activeModeObj && activeModeObj.opponents > 1 ? 's' : ''}
+                  </p>
                 </div>
               </div>
 
-              {/* Cancel Button to Return to Mode Selection */}
+              {/* Cancel Button with only "X" Icon */}
               <button
                 type="button"
                 onClick={() => setSelectedModeStage(null)}
-                className="px-3.5 py-2 rounded-xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-red-500/60 hover:text-red-400 text-xs font-bold text-[var(--theme-text-muted)] transition-all cursor-pointer flex items-center justify-center gap-1.5 self-start sm:self-auto"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[var(--theme-bg-main)]/80 hover:bg-red-500/20 hover:text-red-400 border border-[var(--theme-border)] hover:border-red-500/50 text-[var(--theme-text-muted)] transition-all cursor-pointer flex items-center justify-center font-bold text-sm sm:text-base active:scale-95"
+                title="Back to Mode Selection"
+                aria-label="Back to Mode Selection"
               >
-                <span>✕</span>
-                <span>Change Mode</span>
+                ✕
               </button>
             </div>
 
@@ -275,50 +226,36 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
         )}
       </div>
 
-      {/* Lobby Navigation Hub (3 Clean Core Items) */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      {/* Lobby Navigation Hub: 3 Clickable Icon-Only Cards (Profile, Multiplayer, Audio & Themes) */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-1">
+        {/* Card 1: My Profile */}
         <button
           onClick={onOpenProfile || onOpenAvatarStudio}
-          className="p-2.5 sm:p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+          className="h-16 sm:h-20 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] transition-all flex items-center justify-center group cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+          title="My Profile"
+          aria-label="My Profile"
         >
-          <span className="text-xl mb-1 block">👤</span>
-          <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">
-            My Profile
-          </span>
-          <span className="text-[10px] text-[var(--theme-text-muted)]">
-            Stats, records & ID
-          </span>
+          <User className="w-7 h-7 sm:w-8 sm:h-8 text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] group-hover:scale-110 transition-all" />
         </button>
 
+        {/* Card 2: Online Multiplayer */}
         <button
           onClick={onOpenMultiplayer}
-          className="p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+          className="h-16 sm:h-20 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] transition-all flex items-center justify-center group cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+          title="Online Multiplayer"
+          aria-label="Online Multiplayer"
         >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xl">🌐</span>
-            <span className="text-[9px] font-bold text-[var(--theme-gold)] bg-[var(--theme-gold)]/15 px-1.5 py-0.2 rounded-full">
-              Preview
-            </span>
-          </div>
-          <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">
-            Online Multiplayer
-          </span>
-          <span className="text-[10px] text-[var(--theme-text-muted)]">
-            Private tables & codes
-          </span>
+          <Globe className="w-7 h-7 sm:w-8 sm:h-8 text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] group-hover:scale-110 transition-all" />
         </button>
 
+        {/* Card 3: Audio & Themes */}
         <button
           onClick={onOpenSettings}
-          className="p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+          className="h-16 sm:h-20 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] transition-all flex items-center justify-center group cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+          title="Audio & Themes"
+          aria-label="Audio & Themes"
         >
-          <span className="text-xl mb-1 block">⚙️</span>
-          <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">
-            Audio & Themes
-          </span>
-          <span className="text-[10px] text-[var(--theme-text-muted)]">
-            Music, speed & 6 themes
-          </span>
+          <Settings className="w-7 h-7 sm:w-8 sm:h-8 text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] group-hover:scale-110 transition-all" />
         </button>
       </div>
     </div>

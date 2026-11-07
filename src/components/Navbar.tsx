@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, Sparkles, Music, Settings, Home } from 'lucide-react';
+import { Sparkles, Settings, Home, Gift, Info } from 'lucide-react';
 
 interface NavbarProps {
   gems: number;
@@ -120,39 +120,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Zone 3: Actions & Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          {/* Music Toggle */}
-          <button
-            onClick={onToggleMusic}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              musicEnabled
-                ? 'bg-[var(--theme-bg-elevated)] text-[var(--theme-accent)] border-[var(--theme-accent)]/50'
-                : 'text-[var(--theme-text-muted)] border-transparent hover:bg-[var(--theme-bg-surface)]'
-            }`}
-            title={musicEnabled ? 'Turn music off' : 'Turn music on'}
-            aria-label="Toggle Music"
-          >
-            <Music className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </button>
-
-          {/* Sound Mute Toggle */}
-          <button
-            onClick={onToggleSound}
-            className="p-1.5 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-surface)] rounded-lg transition-colors cursor-pointer"
-            title={soundEnabled ? 'Mute sound' : 'Unmute sound'}
-            aria-label={soundEnabled ? 'Mute sound' : 'Unmute sound'}
-          >
-            {soundEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />}
-          </button>
-
-          {/* Settings Button */}
-          <button
-            onClick={onOpenSettings}
-            className="p-1.5 text-[var(--theme-text-muted)] hover:text-[var(--theme-accent)] hover:bg-[var(--theme-bg-surface)] rounded-lg transition-colors cursor-pointer"
-            title="Settings"
-          >
-            <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </button>
-
           {/* In-game Peek Button */}
           {isInGame && (
             <button
@@ -173,14 +140,44 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {/* How to Play Rules ("i" icon only) */}
+          <button
+            onClick={onOpenHowToPlay}
+            className="p-1.5 text-[var(--theme-text-muted)] hover:text-[var(--theme-gold)] hover:bg-[var(--theme-bg-surface)] rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            title="How to Play"
+            aria-label="How to Play"
+          >
+            <Info className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+          </button>
+
+          {/* Settings Button (audio/sound toggles are inside Settings) */}
+          <button
+            onClick={onOpenSettings}
+            className="p-1.5 text-[var(--theme-text-muted)] hover:text-[var(--theme-gold)] hover:bg-[var(--theme-bg-surface)] rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            title="Settings"
+            aria-label="Settings"
+          >
+            <Settings className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+          </button>
+
+          {/* Gift Icon Button beside Gem Amount */}
+          <button
+            onClick={onOpenDailyReward}
+            className="p-1.5 text-[var(--theme-text-muted)] hover:text-[var(--theme-gold)] hover:bg-[var(--theme-bg-surface)] rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            title="Daily Bonus Gift"
+            aria-label="Daily Bonus Gift"
+          >
+            <Gift className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[var(--theme-gold)]" />
+          </button>
+
           {/* Gem Balance Counter */}
           <button
             onClick={onOpenGemShop}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border-subtle)] hover:border-[var(--theme-accent)] text-[var(--theme-text-primary)] text-xs font-bold transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-border-subtle)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] text-xs font-bold transition-all shadow-sm cursor-pointer"
             title="Gem balance (Click to open Gem Shop)"
           >
             <span>💎</span>
-            <span className="font-mono text-[var(--theme-accent)] text-xs">{gems}</span>
+            <span className="font-mono text-[var(--theme-gold)] text-xs font-bold">{gems}</span>
           </button>
 
           {/* New Match Button */}

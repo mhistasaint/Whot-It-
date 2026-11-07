@@ -451,9 +451,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-xs font-semibold text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-sm font-bold text-[var(--theme-text-muted)] hover:text-red-400 hover:border-red-500/40 flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0"
+            aria-label="Close"
+            title="Close"
           >
-            Cancel
+            ✕
           </button>
           <button
             type="button"

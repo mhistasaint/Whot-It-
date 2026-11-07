@@ -60,9 +60,10 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-xs text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] p-1.5 cursor-pointer"
+            className="w-8 h-8 rounded-full bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-red-500/40 text-[var(--theme-text-muted)] hover:text-red-400 flex items-center justify-center text-sm font-bold cursor-pointer transition-all active:scale-95"
+            aria-label="Close"
           >
-            ✕ Close
+            ✕
           </button>
         </div>
 

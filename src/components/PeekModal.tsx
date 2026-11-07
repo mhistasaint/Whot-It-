@@ -58,7 +58,17 @@ export const PeekModal: React.FC<PeekModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-5 sm:p-6 text-[var(--theme-text-primary)]">
+      <div className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-5 sm:p-6 text-[var(--theme-text-primary)]">
+        {/* Top Right Close 'X' */}
+        <button
+          type="button"
+          onClick={handleModalClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--theme-bg-main)] hover:bg-red-500/20 hover:text-red-400 border border-[var(--theme-border)] hover:border-red-500/50 text-[var(--theme-text-muted)] transition-all cursor-pointer flex items-center justify-center font-bold text-sm active:scale-95"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+
         {!revealed ? (
           /* Confirmation Screen */
           <div className="flex flex-col items-center text-center">
@@ -105,10 +115,13 @@ export const PeekModal: React.FC<PeekModalProps> = ({
             {/* Action buttons */}
             <div className="flex items-center gap-3 w-full">
               <button
+                type="button"
                 onClick={handleModalClose}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] text-xs font-semibold text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-elevated)] transition-all cursor-pointer"
+                className="w-10 h-10 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-red-500/50 text-[var(--theme-text-muted)] hover:text-red-400 text-sm font-bold transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+                aria-label="Cancel"
+                title="Cancel"
               >
-                Cancel
+                ✕
               </button>
 
               {!isDailyFreePeek && !hasEnoughGems ? (

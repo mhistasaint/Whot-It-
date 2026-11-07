@@ -97,7 +97,7 @@ export const CenterTable: React.FC<CenterTableProps> = ({
 
         {/* Central Discard Pile */}
         <div className="flex flex-col items-center">
-          <div className="relative">
+          <div className="relative" id="table-discard-pile">
             {/* Previous card peek for realism */}
             {previousCard && (
               <div

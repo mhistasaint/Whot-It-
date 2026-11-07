@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CardShape, GameState, GameMode, BotDifficulty, PlayerAvatar, UserProfile } from './game/types';
+import { Card, CardShape, GameState, GameMode, BotDifficulty, PlayerAvatar, UserProfile } from './game/types';
 import { initGame, playCard, drawCard, resolveWhotShape, cancelWhotShape } from './game/engine';
 import { selectBotMove } from './game/bots';
 import { peekNextBotMove } from './game/peek';
+import { CardView } from './components/CardView';
 import {
   getStoredGems,
   deductGems,
@@ -40,7 +41,7 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { AvatarCustomizerModal } from './components/AvatarCustomizerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { MultiplayerModal } from './components/MultiplayerModal';
-import { Home, Pause, Play, Settings, Sparkles } from 'lucide-react';
+import { Home, Pause, Play, Settings, Sparkles, Info } from 'lucide-react';
 
 export default function App() {
   // Settings & Persistent State
@@ -83,6 +84,15 @@ export default function App() {
 
   // In-Game Pause State
   const [isGamePaused, setIsGamePaused] = useState(false);
+
+  // Smooth card move animation from player hand to discard pile
+  const [animatingPlayCard, setAnimatingPlayCard] = useState<{
+    card: Card;
+    startRect: { left: number; top: number; width: number; height: number };
+    targetRect: { left: number; top: number; width: number; height: number };
+    progress: boolean;
+    rotation: number;
+  } | null>(null);
 
   // Bot activity indicators
   const [opponentActionText, setOpponentActionText] = useState<{ [playerId: string]: string | null }>({});
@@ -272,9 +282,9 @@ export default function App() {
     isGamePaused,
   ]);
 
-  // Human player actions
-  const handleHumanPlayCard = (cardId: string) => {
-    if (gameState.currentPlayerIndex !== 0) return;
+  // Human player actions with tactile smooth card animation
+  const handleHumanPlayCard = (cardId: string, startRect?: DOMRect) => {
+    if (gameState.currentPlayerIndex !== 0 || gameState.status !== 'PLAYING' || isGamePaused || animatingPlayCard) return;
 
     const humanPlayer = gameState.players[0];
     const card = humanPlayer.hand.find(c => c.id === cardId);
@@ -287,26 +297,78 @@ export default function App() {
       return;
     }
 
-    // Normal or special card: update stats and play immediately
+    const discardEl = document.getElementById('table-discard-pile');
+    const targetRect = discardEl?.getBoundingClientRect();
+
+    if (startRect && targetRect) {
+      if (card.isSpecial && card.specialType) {
+        soundService.playSpecialCard(card.specialType);
+      } else {
+        soundService.playCardPlay();
+      }
+
+      const randomRot = Math.random() * 10 - 5;
+      setAnimatingPlayCard({
+        card,
+        startRect: {
+          left: startRect.left,
+          top: startRect.top,
+          width: startRect.width,
+          height: startRect.height,
+        },
+        targetRect: {
+          left: targetRect.left,
+          top: targetRect.top,
+          width: targetRect.width,
+          height: targetRect.height,
+        },
+        progress: false,
+        rotation: randomRot,
+      });
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimatingPlayCard(prev => (prev ? { ...prev, progress: true } : null));
+        });
+      });
+
+      setTimeout(() => {
+        executePlayCardAction(card.id);
+        setAnimatingPlayCard(null);
+      }, 300);
+    } else {
+      executePlayCardAction(card.id);
+    }
+  };
+
+  const executePlayCardAction = (cardId: string, chosenShape?: CardShape) => {
+    const humanPlayer = gameState.players[0];
+    const card = humanPlayer.hand.find(c => c.id === cardId);
+    if (!card) return;
+
     updateMatchStats(prev => ({
       ...prev,
       cardsPlayed: prev.cardsPlayed + 1,
+      whotsPlayed: card.number === 20 || card.shape === 'WHOT' ? prev.whotsPlayed + 1 : prev.whotsPlayed,
       holdOnsPlayed: card.number === 1 ? prev.holdOnsPlayed + 1 : prev.holdOnsPlayed,
       generalMarketsPlayed: card.number === 14 ? prev.generalMarketsPlayed + 1 : prev.generalMarketsPlayed,
-      penaltiesStacked: gameState.pendingPenalty && (card.number === 2 || card.number === 5)
-        ? prev.penaltiesStacked + 1
-        : prev.penaltiesStacked,
+      penaltiesStacked:
+        gameState.pendingPenalty && (card.number === 2 || card.number === 5)
+          ? prev.penaltiesStacked + 1
+          : prev.penaltiesStacked,
     }));
     setStats(getMatchStats());
 
-    if (card.isSpecial && card.specialType) {
-      soundService.playSpecialCard(card.specialType);
-    } else {
-      soundService.playCardPlay();
+    if (!animatingPlayCard) {
+      if (card.isSpecial && card.specialType) {
+        soundService.playSpecialCard(card.specialType);
+      } else {
+        soundService.playCardPlay();
+      }
     }
 
     setSelectedCardId(null);
-    setGameState(prev => playCard(prev, 0, cardId));
+    setGameState(prev => playCard(prev, 0, cardId, chosenShape));
   };
 
   // Called when user confirms WHOT 20 shape in modal
@@ -322,15 +384,8 @@ export default function App() {
       return;
     }
 
-    updateMatchStats(prev => ({
-      ...prev,
-      cardsPlayed: prev.cardsPlayed + 1,
-      whotsPlayed: prev.whotsPlayed + 1,
-    }));
-    setStats(getMatchStats());
-
     soundService.playSpecialCard('WHOT');
-    setGameState(prev => playCard(prev, 0, cardIdToPlay, shape));
+    executePlayCardAction(cardIdToPlay, shape);
     setStagedWhotCardId(null);
     setSelectedCardId(null);
   };
@@ -589,8 +644,17 @@ export default function App() {
               </button>
             </div>
 
-            {/* Right: Pause & Settings Buttons */}
-            <div className="flex items-center gap-2">
+            {/* Right: How to Play ("i" icon), Pause & Settings Buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button
+                onClick={() => setIsHowToPlayOpen(true)}
+                className="p-1.5 rounded-lg bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-primary)] transition-all cursor-pointer shadow-sm active:scale-95 flex items-center justify-center"
+                title="How to Play"
+                aria-label="How to Play"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+
               <button
                 onClick={() => setIsGamePaused(prev => !prev)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 ${
@@ -696,10 +760,43 @@ export default function App() {
                 onPlayCard={handleHumanPlayCard}
                 onDrawCard={handleHumanDraw}
                 turnTimeRemaining={turnTimeRemaining}
+                animatingCardId={animatingPlayCard?.card.id}
               />
             </div>
           </div>
         </main>
+      )}
+
+      {/* Smooth Flying Card Transition Overlay from Player Hand to Discard Pile */}
+      {animatingPlayCard && (
+        <div
+          className="fixed pointer-events-none z-50 select-none will-change-transform"
+          style={{
+            left: animatingPlayCard.startRect.left,
+            top: animatingPlayCard.startRect.top,
+            width: animatingPlayCard.startRect.width,
+            height: animatingPlayCard.startRect.height,
+            transform: animatingPlayCard.progress
+              ? `translate(${
+                  animatingPlayCard.targetRect.left -
+                  animatingPlayCard.startRect.left +
+                  (animatingPlayCard.targetRect.width - animatingPlayCard.startRect.width) / 2
+                }px, ${
+                  animatingPlayCard.targetRect.top -
+                  animatingPlayCard.startRect.top +
+                  (animatingPlayCard.targetRect.height - animatingPlayCard.startRect.height) / 2
+                }px) scale(${animatingPlayCard.targetRect.width / animatingPlayCard.startRect.width}) rotate(${
+                  animatingPlayCard.rotation
+                }deg)`
+              : 'translate(0px, 0px) scale(1) rotate(0deg)',
+            transition: 'transform 300ms cubic-bezier(0.18, 0.9, 0.28, 1.05), opacity 300ms ease',
+            filter: animatingPlayCard.progress
+              ? 'drop-shadow(0 16px 24px rgba(0,0,0,0.5))'
+              : 'drop-shadow(0 4px 8px rgba(0,0,0,0.25))',
+          }}
+        >
+          <CardView card={animatingPlayCard.card} size="hand" isPlayable={false} />
+        </div>
       )}
 
       {/* WHOT Shape Selection Modal with Cancellation & Confirmation */}
@@ -824,6 +921,12 @@ export default function App() {
                 className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer"
               >
                 Start Over
+              </button>
+              <button
+                onClick={() => setIsHowToPlayOpen(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>📖</span> How to Play Rules
               </button>
               <button
                 onClick={() => setIsSettingsOpen(true)}

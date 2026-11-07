@@ -16,7 +16,18 @@ export const SignInLockedModal: React.FC<SignInLockedModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none text-[var(--theme-text-primary)]">
-      <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-5 sm:p-6 text-center">
+      <div className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-5 sm:p-6 text-center">
+        {/* Top-Right 'X' Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--theme-bg-main)] hover:bg-red-500/20 hover:text-red-400 border border-[var(--theme-border)] hover:border-red-500/50 text-[var(--theme-text-muted)] transition-all cursor-pointer flex items-center justify-center font-bold text-sm active:scale-95"
+          aria-label="Close"
+          title="Close"
+        >
+          ✕
+        </button>
+
         {/* Lock Icon */}
         <div className="w-16 h-16 mx-auto rounded-2xl bg-[var(--theme-bg-main)] border border-[var(--theme-gold)]/40 flex items-center justify-center mb-4 text-[var(--theme-gold)] shadow-inner">
           <Lock className="w-8 h-8" />
@@ -72,10 +83,13 @@ export const SignInLockedModal: React.FC<SignInLockedModalProps> = ({
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center gap-2.5">
           <button
+            type="button"
             onClick={onClose}
-            className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] text-[var(--theme-text-primary)] font-display font-bold text-xs transition-all cursor-pointer"
+            className="w-11 h-11 rounded-xl bg-[var(--theme-bg-main)] border border-[var(--theme-border)] hover:border-red-500/50 text-[var(--theme-text-muted)] hover:text-red-400 font-bold text-sm transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+            aria-label="Close"
+            title="Close"
           >
-            Close
+            ✕
           </button>
           <button
             onClick={() => {

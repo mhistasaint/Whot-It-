@@ -6,7 +6,7 @@ interface CardViewProps {
   faceDown?: boolean;
   isPlayable?: boolean;
   isSelected?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'table' | 'hand';
   className?: string;
   style?: React.CSSProperties;

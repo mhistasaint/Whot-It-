@@ -12,9 +12,10 @@ interface PlayerHandProps {
   hintsEnabled?: boolean;
   selectedCardId?: string | null;
   onSelectCard?: (cardId: string | null) => void;
-  onPlayCard: (cardId: string) => void;
+  onPlayCard: (cardId: string, startRect?: DOMRect) => void;
   onDrawCard: () => void;
   turnTimeRemaining?: number;
+  animatingCardId?: string | null;
 }
 
 export const PlayerHand: React.FC<PlayerHandProps> = ({
@@ -29,6 +30,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
   onPlayCard,
   onDrawCard,
   turnTimeRemaining,
+  animatingCardId,
 }) => {
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
   const selectedCardId = externalSelectedId !== undefined ? externalSelectedId : internalSelectedId;
@@ -38,17 +40,19 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
     isCardPlayable(card, activeShape, activeNumber, pendingPenalty)
   );
 
-  const handleCardClick = (card: Card) => {
+  const handleCardClick = (card: Card, e?: React.MouseEvent) => {
     if (!isHumanTurn) return;
 
     const isLegal = isCardPlayable(card, activeShape, activeNumber, pendingPenalty);
     if (!isLegal) return;
 
+    const rect = e ? (e.currentTarget as HTMLElement).getBoundingClientRect() : undefined;
+
     // WHOT 20 ONLY: Open shape selection modal with cancellation/confirmation
     if (card.number === 20) {
       if (onSelectCard) onSelectCard(card.id);
       else setInternalSelectedId(card.id);
-      onPlayCard(card.id);
+      onPlayCard(card.id, rect);
       return;
     }
 
@@ -56,7 +60,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
     // Play immediately on first click! No confirmation modal, no second click, no prompt.
     if (onSelectCard) onSelectCard(null);
     else setInternalSelectedId(null);
-    onPlayCard(card.id);
+    onPlayCard(card.id, rect);
   };
 
   return (
@@ -117,6 +121,8 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
               <div
                 key={card.id}
                 className={`transform transition-all duration-200 shrink-0 ${
+                  animatingCardId === card.id ? 'opacity-0 scale-95 pointer-events-none' : ''
+                } ${
                   isSelected
                     ? 'z-40 -translate-y-4 scale-105 shadow-2xl'
                     : 'hover:z-30 hover:-translate-y-3 hover:scale-105 active:scale-95'
@@ -128,9 +134,9 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                 <CardView
                   card={card}
                   size="hand"
-                  isPlayable={playable}
+                  isPlayable={playable && animatingCardId !== card.id}
                   isSelected={isSelected}
-                  onClick={() => handleCardClick(card)}
+                  onClick={(e: React.MouseEvent) => handleCardClick(card, e)}
                   className={`${showDim ? 'opacity-60 filter grayscale-[25%]' : ''}`}
                 />
               </div>
