@@ -46,7 +46,7 @@ export const GemShopModal: React.FC<GemShopModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-6 text-[var(--theme-text-primary)] max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-4 sm:p-6 text-[var(--theme-text-primary)] max-h-[92dvh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--theme-border)] pb-3 mb-4">
           <div className="flex items-center gap-2">

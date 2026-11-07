@@ -32,26 +32,20 @@ export const CenterTable: React.FC<CenterTableProps> = ({
 
   return (
     <div className="relative flex flex-col items-center justify-center w-full max-w-xl mx-auto py-1 sm:py-2 select-none text-[var(--theme-text-primary)]">
-      {/* Active Shape & Context Bar */}
-      <div className="flex items-center flex-wrap justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-        <div className="flex items-center gap-2 sm:gap-3 bg-[var(--theme-bg-main)]/90 border border-[var(--theme-gold)]/40 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 shadow-md backdrop-blur-sm text-[11px] sm:text-xs">
-          <div className="flex items-center gap-1.5 font-medium text-[var(--theme-text-muted)]">
-            <span>Shape:</span>
-            <span className="font-display font-extrabold text-[var(--theme-gold)] tracking-wider uppercase flex items-center gap-1">
-              <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B91C1C] inline-block bg-[#FDFBF7] p-0.5 rounded">
-                <ShapeIcon shape={activeShape} className="w-full h-full" />
-              </span>
-              {activeShape}
-            </span>
-          </div>
-          <span className="text-[var(--theme-gold)]/40">·</span>
-          <div className="font-medium text-[var(--theme-text-muted)]">
-            <span>Match:</span>{' '}
-            <strong className="text-[var(--theme-text-primary)] font-bold">
-              {activeShape} or {activeNumber}
-            </strong>
-          </div>
-        </div>
+      {/* Active Shape & Match Hint: Plain text fitting on one line without any enclosing shape */}
+      <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-[10px] sm:text-xs whitespace-nowrap text-center">
+        <span className="text-[var(--theme-text-muted)] font-medium">Shape:</span>
+        <span className="font-display font-black text-[var(--theme-gold)] tracking-wide uppercase flex items-center gap-1">
+          <span className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#B91C1C] inline-block bg-[#FDFBF7] p-0.5 rounded shrink-0">
+            <ShapeIcon shape={activeShape} className="w-full h-full" />
+          </span>
+          {activeShape}
+        </span>
+        <span className="text-[var(--theme-gold)]/40 mx-0.5">·</span>
+        <span className="text-[var(--theme-text-muted)] font-medium">Match:</span>
+        <strong className="text-[var(--theme-text-primary)] font-bold">
+          {activeShape} or {activeNumber}
+        </strong>
       </div>
 
       {/* Pending Penalty Alert Banner */}
@@ -65,7 +59,7 @@ export const CenterTable: React.FC<CenterTableProps> = ({
       )}
 
       {/* Main Table Decks (Draw Pile + Discard Pile) */}
-      <div className="flex items-center justify-center gap-6 sm:gap-10 md:gap-14 my-1">
+      <div className="flex items-center justify-center gap-3 sm:gap-6 md:gap-10 my-1">
         {/* Draw Pile / General Market (Direct Tap to Pick from Market) */}
         <div className="flex flex-col items-center">
           <div

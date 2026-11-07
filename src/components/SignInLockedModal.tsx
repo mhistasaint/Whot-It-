@@ -16,7 +16,7 @@ export const SignInLockedModal: React.FC<SignInLockedModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none text-[var(--theme-text-primary)]">
-      <div className="w-full max-w-md bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-6 text-center">
+      <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-5 sm:p-6 text-center">
         {/* Lock Icon */}
         <div className="w-16 h-16 mx-auto rounded-2xl bg-[var(--theme-bg-main)] border border-[var(--theme-gold)]/40 flex items-center justify-center mb-4 text-[var(--theme-gold)] shadow-inner">
           <Lock className="w-8 h-8" />

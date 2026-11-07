@@ -40,7 +40,6 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { AvatarCustomizerModal } from './components/AvatarCustomizerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { MultiplayerModal } from './components/MultiplayerModal';
-import { LandscapePrompt } from './components/LandscapePrompt';
 import { Home, Pause, Play, Settings, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -637,9 +636,9 @@ export default function App() {
             )}
 
             {/* REGION B: CENTRAL PLAY ARENA — Split Bots (Left, Right) and Center Table */}
-            <div className="flex-1 flex flex-row items-center justify-between w-full my-auto py-1 px-1 sm:px-3 gap-1 sm:gap-3">
+            <div className="flex-1 flex flex-row items-center justify-between w-full my-auto py-0.5 sm:py-1 px-0.5 sm:px-2 md:px-3 gap-0.5 sm:gap-2 md:gap-3 overflow-hidden">
               {/* Left Opponent Column */}
-              <div className="flex items-center justify-center w-20 sm:w-28 md:w-32 shrink-0">
+              <div className="flex items-center justify-center w-16 sm:w-24 md:w-32 shrink-0">
                 {leftOpponent ? (
                   <OpponentSeat
                     player={leftOpponent}
@@ -654,7 +653,7 @@ export default function App() {
               </div>
 
               {/* Central Table: Draw Pile & Discard Pile (No top timer, direct tap to draw) */}
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 min-w-0 flex items-center justify-center">
                 <CenterTable
                   drawPileCount={gameState.drawPile.length}
                   discardPile={gameState.discardPile}
@@ -668,7 +667,7 @@ export default function App() {
               </div>
 
               {/* Right Opponent Column */}
-              <div className="flex items-center justify-center w-20 sm:w-28 md:w-32 shrink-0">
+              <div className="flex items-center justify-center w-16 sm:w-24 md:w-32 shrink-0">
                 {rightOpponent ? (
                   <OpponentSeat
                     player={rightOpponent}
@@ -700,9 +699,6 @@ export default function App() {
               />
             </div>
           </div>
-
-          {/* Forced Landscape Mode Prompt for Mobile Devices */}
-          <LandscapePrompt />
         </main>
       )}
 

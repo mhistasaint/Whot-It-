@@ -316,9 +316,40 @@ function runIntegrityTests() {
   console.assert(rankResult.progressPercent >= 0 && rankResult.progressPercent <= 100, 'Progress percent is bounded [0, 100]');
   console.log('✓ Test 17 Passed: Player Profile system correctly calculates level, XP, rank tier, and multiplayer identification readiness');
 
-  console.log('ALL 17 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
+  // 18. Outstanding Draw Fulfillment upon Market Restack (Silent distribution)
+  const outstandingGame = initGame('1v1', 'MEDIUM', 'Tester');
+  const dummyTop: Card = { id: 'top_1', shape: 'CIRCLE', number: 7, isSpecial: false };
+  outstandingGame.drawPile = [];
+  outstandingGame.discardPile = [dummyTop];
+  outstandingGame.activeShape = 'CIRCLE';
+  outstandingGame.activeNumber = 7;
+  outstandingGame.pendingPenalty = { type: 'PICK_TWO', amount: 2, initiatorName: 'Bot' };
+
+  // Human player cannot defend and must draw 2 penalty cards, but market is empty
+  const stateAfterShortfall = drawCard(outstandingGame, 0);
+  console.assert(stateAfterShortfall.players[0].outstandingDraws === 2, `Player must have 2 outstanding draws recorded, got ${stateAfterShortfall.players[0].outstandingDraws}`);
+  // Check that no log mentions "outstanding"
+  const logsWithOutstanding = stateAfterShortfall.log.filter(l => l.text.toLowerCase().includes('outstanding'));
+  console.assert(logsWithOutstanding.length === 0, 'No text mentioning outstanding draws must appear in the logs/frontend');
+
+  // Next player (bot 1) plays a card: Circle 3
+  const playCard1: Card = { id: 'play_1', shape: 'CIRCLE', number: 3, isSpecial: false };
+  stateAfterShortfall.players[1].hand = [playCard1, { id: 'extra_1', shape: 'STAR', number: 1, isSpecial: true }];
+  stateAfterShortfall.activeShape = 'CIRCLE';
+  stateAfterShortfall.activeNumber = 7;
+  
+  const stateAfterBotPlay = playCard(stateAfterShortfall, 1, 'play_1');
+  // Discard had [dummyTop, play_1]. dummyTop was reshuffled into market, and immediately given to Player 0!
+  console.assert(stateAfterBotPlay.players[0].outstandingDraws === 1, `Player 0 should now have 1 outstanding draw remaining, got ${stateAfterBotPlay.players[0].outstandingDraws}`);
+  console.assert(stateAfterBotPlay.players[0].hand.some(c => c.id === 'top_1'), 'Player 0 automatically received the restacked card silently');
+  const logsWithOutstanding2 = stateAfterBotPlay.log.filter(l => l.text.toLowerCase().includes('outstanding'));
+  console.assert(logsWithOutstanding2.length === 0, 'No text mentioning outstanding draws must appear in the logs/frontend after fulfillment');
+  console.log('✓ Test 18 Passed: Outstanding cards tracked on market shortfall and automatically & silently distributed upon market restacking');
+
+  console.log('ALL 18 VERIFICATION TESTS COMPLETED SUCCESSFULLY! 100% PASS');
 }
 
 runIntegrityTests();
+
 
 

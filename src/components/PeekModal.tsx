@@ -58,7 +58,7 @@ export const PeekModal: React.FC<PeekModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-md bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-5 sm:p-6 text-[var(--theme-text-primary)]">
+      <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-5 sm:p-6 text-[var(--theme-text-primary)]">
         {!revealed ? (
           /* Confirmation Screen */
           <div className="flex flex-col items-center text-center">

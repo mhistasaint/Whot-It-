@@ -33,6 +33,7 @@ export interface Player {
   avatar: PlayerAvatar;
   personality: string;
   titles?: string;
+  outstandingDraws?: number;
 }
 
 export interface PendingPenalty {

@@ -88,7 +88,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm select-none animate-fade-in overflow-y-auto text-[var(--theme-text-primary)]">
-      <div className="w-full max-w-2xl bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-4 sm:p-6 my-auto max-h-[92vh] overflow-y-auto">
+      <div className="w-full max-w-2xl bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-4 sm:p-6 my-auto max-h-[92dvh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-[var(--theme-border)]">

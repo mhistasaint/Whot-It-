@@ -34,7 +34,7 @@ export const WhotShapeModal: React.FC<WhotShapeModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-sm sm:max-w-md bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-4 sm:p-6 text-center text-[var(--theme-text-primary)]">
+      <div className="w-full max-w-sm sm:max-w-md max-h-[92dvh] overflow-y-auto bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-2xl shadow-2xl p-4 sm:p-6 text-center text-[var(--theme-text-primary)]">
         
         {/* Header with Close / Cancel 'X' only */}
         <div className="flex items-center justify-between pb-2 mb-3 border-b border-[var(--theme-border)]/50">

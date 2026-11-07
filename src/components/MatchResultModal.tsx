@@ -16,8 +16,6 @@ interface MatchResultModalProps {
 export const MatchResultModal: React.FC<MatchResultModalProps> = ({
   isOpen,
   winner,
-  players,
-  turnCount,
   onNewMatch,
   onReturnToLobby,
   onReturnHome,
@@ -84,9 +82,9 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-md bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-6 sm:p-7 text-center text-[var(--theme-text-primary)] overflow-hidden">
+      <div className="relative w-full max-w-sm sm:max-w-md bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-gold)] rounded-3xl shadow-2xl p-6 sm:p-7 text-center text-[var(--theme-text-primary)] overflow-hidden">
         
-        {/* Celebration Sunburst & Bouncy Trophy */}
+        {/* Celebration Sunburst & Bouncy Trophy / Crown */}
         <div className="relative mb-3 flex items-center justify-center">
           {isHumanWinner && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -130,57 +128,28 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
           </div>
         </div>
 
-        {isHumanWinner && (
-          <div className="inline-block bg-[var(--theme-gold)]/15 border border-[var(--theme-gold)]/40 text-[var(--theme-gold)] px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-1.5 animate-pulse">
-            ★ Victory Achieved ★
-          </div>
-        )}
-
-        <h2 className={`font-display font-black text-2xl sm:text-3xl mb-1 ${isHumanWinner ? 'victory-gold-shimmer' : 'text-[var(--theme-text-primary)]'}`}>
-          {isHumanWinner ? 'You Won the Match!' : `${winner.name} Won!`}
+        {/* Big "Winner" Heading */}
+        <h2 className="font-display font-black text-3xl sm:text-4xl uppercase tracking-wider text-[var(--theme-gold)] mb-4">
+          Winner
         </h2>
-        <p className="text-xs text-[var(--theme-text-muted)] mb-5 max-w-sm mx-auto">
-          {isHumanWinner
-            ? 'Splendid game! You emptied your hand first and conquered the table.'
-            : `${winner.name} finished all cards first. Ready for a rematch?`}
-        </p>
 
-        {/* Winner Showcase */}
-        <div className="flex items-center justify-center gap-3 bg-[var(--theme-bg-main)] border border-[var(--theme-border)] rounded-2xl p-3 mb-4 shadow-inner">
-          <AvatarView avatar={winner.avatar} name={winner.name} size="md" />
-          <div className="text-left">
-            <span className="font-display font-bold text-sm text-[var(--theme-text-primary)] block">
-              {winner.name}
+        {/* Winner Avatar with Name */}
+        <div className="flex flex-col items-center justify-center gap-2 mb-7">
+          <AvatarView avatar={winner.avatar} name={winner.name} size="lg" />
+          <div className="text-center">
+            <span className="font-display font-black text-xl sm:text-2xl text-[var(--theme-text-primary)] block">
+              {winner.name} {winner.isHuman ? '(You)' : ''}
             </span>
-            <span className="text-[11px] text-[var(--theme-accent)] font-semibold">{winner.titles || 'Champion'}</span>
+            {winner.titles && (
+              <span className="text-xs text-[var(--theme-accent)] font-semibold block mt-0.5">
+                {winner.titles}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Final Standings / Hand counts */}
-        <div className="bg-[var(--theme-bg-main)] border border-[var(--theme-border)] rounded-2xl p-3 text-xs mb-5 text-left shadow-inner">
-          <span className="text-[10px] uppercase font-bold text-[var(--theme-text-muted)] tracking-wider block mb-2">
-            Remaining Hand Standings
-          </span>
-          <div className="space-y-1.5">
-            {players.map(p => (
-              <div key={p.id} className="flex items-center justify-between">
-                <span className={`flex items-center gap-1.5 ${p.id === winner.id ? 'font-bold text-[var(--theme-accent)]' : 'text-[var(--theme-text-primary)]/80'}`}>
-                  {p.id === winner.id ? '🥇' : '•'} {p.name} {p.isHuman ? '(You)' : ''}
-                </span>
-                <span className="font-mono">
-                  {p.id === winner.id ? '0 cards (Winner)' : `${p.hand.length} cards`}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 pt-2 border-t border-[var(--theme-border)] flex justify-between text-[11px] text-[var(--theme-text-muted)]">
-            <span>Total Turns:</span>
-            <span>{turnCount} turns</span>
-          </div>
-        </div>
-
-        {/* Play Again & Back to Home Actions (NO home icon, Play Again text) */}
-        <div className="flex flex-col sm:flex-row items-center gap-2.5">
+        {/* Action Buttons: Back to Home & Play Again */}
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full">
           {(onReturnHome || onReturnToLobby) && (
             <button
               onClick={onReturnHome || onReturnToLobby}

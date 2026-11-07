@@ -69,8 +69,8 @@ export const CardView: React.FC<CardViewProps> = ({
     md: 'w-20 h-28 md:w-24 md:h-34 text-sm rounded-lg shadow-md',
     lg: 'w-24 h-34 md:w-28 md:h-40 text-base rounded-lg shadow-lg',
     xl: 'w-32 h-44 md:w-36 md:h-52 text-lg rounded-xl shadow-xl',
-    table: 'w-20 h-28 sm:w-24 sm:h-34 md:w-28 md:h-40 text-xs sm:text-sm md:text-base rounded-lg shadow-md shrink-0',
-    hand: 'w-20 h-28 sm:w-22 sm:h-32 md:w-24 md:h-34 text-xs sm:text-sm rounded-lg shadow-md shrink-0',
+    table: 'w-[72px] h-[102px] sm:w-24 sm:h-34 md:w-28 md:h-40 text-xs sm:text-sm md:text-base rounded-lg shadow-md shrink-0',
+    hand: 'w-[72px] h-[102px] sm:w-22 sm:h-32 md:w-24 md:h-34 text-xs sm:text-sm rounded-lg shadow-md shrink-0',
   }[size];
 
   // If face down, render authentic textured Nigerian Whot card back themed to active palette

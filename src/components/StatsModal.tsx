@@ -15,8 +15,8 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats }
     : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-md bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-6 text-[var(--theme-text-primary)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
+      <div className="w-full max-w-md bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-4 sm:p-6 text-[var(--theme-text-primary)] max-h-[92dvh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-[var(--theme-border)] pb-3 mb-4">
           <h2 className="font-display font-extrabold text-xl text-[var(--theme-text-primary)] flex items-center gap-2">
             <span>📊</span> Match Statistics

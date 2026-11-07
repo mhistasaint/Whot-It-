@@ -63,7 +63,15 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
   const [selectedModeStage, setSelectedModeStage] = useState<GameMode | null>(null);
   const activeModeObj = MODES.find(m => m.id === (selectedModeStage || selectedMode));
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-4 md:py-8 flex flex-col justify-between min-h-[85vh] select-none animate-fade-in text-[var(--theme-text-primary)]">
+    <div
+      className="w-full max-w-5xl mx-auto px-3 sm:px-4 py-2 sm:py-4 md:py-6 flex flex-col justify-between min-h-[85vh] select-none animate-fade-in text-[var(--theme-text-primary)]"
+      style={{
+        paddingLeft: 'max(0.75rem, env(safe-area-inset-left))',
+        paddingRight: 'max(0.75rem, env(safe-area-inset-right))',
+        paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+      }}
+    >
       
       {/* Lobby Top Banner / Identity Section */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] rounded-3xl p-4 md:p-6 shadow-xl backdrop-blur-sm transition-colors duration-250">
@@ -140,13 +148,13 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
       </div>
 
       {/* Main Game Setup Centerpiece */}
-      <div className="my-6 md:my-8 bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-border)] rounded-3xl p-5 md:p-8 shadow-2xl transition-colors duration-250">
+      <div className="my-3 sm:my-4 md:my-6 bg-[var(--theme-bg-surface)] border-2 border-[var(--theme-border)] rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-2xl transition-colors duration-250">
         {!selectedModeStage ? (
           /* Stage 1: Select Game Mode */
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="font-display font-extrabold text-lg md:text-xl text-[var(--theme-text-primary)] tracking-tight">
+                <h3 className="font-display font-extrabold text-base sm:text-lg md:text-xl text-[var(--theme-text-primary)] tracking-tight">
                   Select Game Mode
                 </h3>
                 <p className="text-xs text-[var(--theme-text-muted)]">
@@ -155,7 +163,7 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               {MODES.map(mode => (
                 <button
                   key={mode.id}
@@ -163,7 +171,7 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
                     onSelectMode(mode.id);
                     setSelectedModeStage(mode.id);
                   }}
-                  className="p-4 rounded-2xl border border-[var(--theme-border)]/70 bg-[var(--theme-bg-main)]/60 hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] text-left transition-all cursor-pointer group hover:scale-[1.01] active:scale-95 shadow-sm"
+                  className="p-3 sm:p-4 rounded-2xl border border-[var(--theme-border)]/70 bg-[var(--theme-bg-main)]/60 hover:border-[var(--theme-gold)] hover:bg-[var(--theme-bg-elevated)] text-left transition-all cursor-pointer group hover:scale-[1.01] active:scale-95 shadow-sm"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-3xl">{mode.icon}</span>
@@ -268,10 +276,10 @@ export const WelcomeLobby: React.FC<WelcomeLobbyProps> = ({
       </div>
 
       {/* Lobby Navigation Hub (3 Clean Core Items) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <button
           onClick={onOpenProfile || onOpenAvatarStudio}
-          className="p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
+          className="p-2.5 sm:p-3.5 rounded-2xl bg-[var(--theme-bg-surface)] border border-[var(--theme-border)] hover:border-[var(--theme-gold)] transition-all text-left group cursor-pointer"
         >
           <span className="text-xl mb-1 block">👤</span>
           <span className="font-display font-bold text-xs text-[var(--theme-text-primary)] group-hover:text-[var(--theme-gold)] block">

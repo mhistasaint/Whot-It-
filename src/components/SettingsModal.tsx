@@ -66,7 +66,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-5 text-[var(--theme-text-primary)] max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-lg bg-[var(--theme-bg-surface)] border border-[var(--theme-gold)] rounded-2xl shadow-2xl p-4 sm:p-5 text-[var(--theme-text-primary)] max-h-[92dvh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--theme-border)] pb-3 mb-4">

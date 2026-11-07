@@ -63,16 +63,16 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
     <div className="w-full max-w-4xl mx-auto px-1 sm:px-4 pb-1 pt-0.5 flex flex-col items-center select-none">
       {/* Hand Header info bar (Single turn timer, no draw button) */}
       <div className="flex items-center justify-between w-full max-w-xl px-2 sm:px-3 py-1 mb-0.5 text-xs">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="font-display font-black text-xs sm:text-sm text-[var(--theme-text-primary)]">
             Your Hand
           </span>
-          <span className="text-[var(--theme-accent)] font-bold bg-[var(--theme-bg-surface)] px-2 py-0.5 rounded-full border border-[var(--theme-border-subtle)] text-[11px] sm:text-xs">
-            {cardCount} {cardCount === 1 ? 'Card' : 'Cards'}
+          <span className="text-[var(--theme-text-muted)] font-medium text-[11px] sm:text-xs whitespace-nowrap">
+            · {cardCount} {cardCount === 1 ? 'card' : 'cards'}
           </span>
           {cardCount === 1 && (
-            <span className="animate-pulse font-display font-black text-[#B91C1C] bg-[#FDFBF7] px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] shadow-md tracking-wider">
-              ⚠️ LAST CARD!
+            <span className="animate-pulse font-display font-bold text-amber-400 text-[10px] sm:text-[11px] tracking-wider whitespace-nowrap">
+              ⚠️ Last Card!
             </span>
           )}
         </div>

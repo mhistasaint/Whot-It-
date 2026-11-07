@@ -125,6 +125,68 @@ export function drawNCards(
 }
 
 /**
+ * Automatically fulfills any outstanding draws for players if cards are available
+ * in the draw pile or can be recycled from the discard pile.
+ * Strictly silent: does not generate any logs or UI text regarding outstanding draws.
+ */
+export function processOutstandingDraws(
+  players: Player[],
+  drawPile: Card[],
+  discardPile: Card[]
+): {
+  players: Player[];
+  drawPile: Card[];
+  discardPile: Card[];
+} {
+  let currentDraw = [...drawPile];
+  let currentDiscard = [...discardPile];
+  let updatedPlayers = [...players];
+
+  const hasOutstanding = updatedPlayers.some(p => (p.outstandingDraws || 0) > 0);
+  if (!hasOutstanding) {
+    return { players, drawPile, discardPile };
+  }
+
+  for (let i = 0; i < updatedPlayers.length; i++) {
+    const p = updatedPlayers[i];
+    let owed = p.outstandingDraws || 0;
+    if (owed <= 0) continue;
+
+    const drawnForPlayer: Card[] = [];
+
+    while (owed > 0) {
+      if (currentDraw.length === 0) {
+        if (currentDiscard.length > 1) {
+          const rec = recycleMarketPile(currentDraw, currentDiscard);
+          currentDraw = rec.drawPile;
+          currentDiscard = rec.discardPile;
+          if (currentDraw.length === 0) break;
+        } else {
+          break;
+        }
+      }
+
+      const card = currentDraw.pop();
+      if (!card) break;
+      drawnForPlayer.push(card);
+      owed -= 1;
+    }
+
+    updatedPlayers[i] = {
+      ...p,
+      hand: drawnForPlayer.length > 0 ? [...p.hand, ...drawnForPlayer] : p.hand,
+      outstandingDraws: owed > 0 ? owed : undefined,
+    };
+  }
+
+  return {
+    players: updatedPlayers,
+    drawPile: currentDraw,
+    discardPile: currentDiscard,
+  };
+}
+
+/**
  * Calculates suspension skip index across any player count (2 to 5 players).
  */
 export function getSuspensionNextIndex(currentIndex: number, isStar: boolean, totalPlayers: number): number {
@@ -260,7 +322,7 @@ export function playCard(
   const newHand = [...player.hand];
   newHand.splice(cardIndex, 1);
 
-  const updatedPlayers = state.players.map((p, idx) =>
+  let updatedPlayers = state.players.map((p, idx) =>
     idx === playerIndex ? { ...p, hand: newHand } : p
   );
 
@@ -418,6 +480,11 @@ export function playCard(
                 ...updatedPlayers[i],
                 hand: [...updatedPlayers[i].hand, ...drawRes.drawnCards],
               };
+            } else {
+              updatedPlayers[i] = {
+                ...updatedPlayers[i],
+                outstandingDraws: (updatedPlayers[i].outstandingDraws || 0) + 1,
+              };
             }
           }
         }
@@ -467,6 +534,14 @@ export function playCard(
       });
     }
   }
+
+  // AUTOMATIC OUTSTANDING DRAWS FULFILLMENT:
+  // As cards start reshuffling into the market, automatically distribute outstanding cards
+  // to any player having an outstanding card. No text is added to the log/frontend.
+  const outstandingRes = processOutstandingDraws(updatedPlayers, drawPile, discardPile);
+  updatedPlayers = outstandingRes.players;
+  drawPile = outstandingRes.drawPile;
+  discardPile = outstandingRes.discardPile;
 
   return {
     ...state,
@@ -543,6 +618,9 @@ export function drawCard(state: GameState, playerIndex: number): GameState {
     state.discardPile
   );
 
+  const shortfall = drawAmount - drawnCards.length;
+  const currentOutstanding = (player.outstandingDraws || 0) + (shortfall > 0 ? shortfall : 0);
+
   if (wasRecycled) {
     logs.push({
       id: `log_${Date.now()}_recycle`,
@@ -569,17 +647,28 @@ export function drawCard(state: GameState, playerIndex: number): GameState {
     });
   }
 
-  const updatedPlayers = state.players.map((p, idx) =>
-    idx === playerIndex ? { ...p, hand: [...p.hand, ...drawnCards] } : p
+  let updatedPlayers = state.players.map((p, idx) =>
+    idx === playerIndex
+      ? {
+          ...p,
+          hand: [...p.hand, ...drawnCards],
+          outstandingDraws: currentOutstanding > 0 ? currentOutstanding : undefined,
+        }
+      : p
   );
+
+  const outstandingRes = processOutstandingDraws(updatedPlayers, newDrawPile, newDiscardPile);
+  updatedPlayers = outstandingRes.players;
+  const finalDrawPile = outstandingRes.drawPile;
+  const finalDiscardPile = outstandingRes.discardPile;
 
   const nextPlayerIndex = getNextPlayerIndex(state.currentPlayerIndex, 1, state.players.length);
 
   return {
     ...state,
     players: updatedPlayers,
-    drawPile: newDrawPile,
-    discardPile: newDiscardPile,
+    drawPile: finalDrawPile,
+    discardPile: finalDiscardPile,
     pendingPenalty: null,
     currentPlayerIndex: nextPlayerIndex,
     turnCount: state.turnCount + 1,
